@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar, Coins } from 'lucide-react';
+import { useI18n } from '../i18n';
 import type { DatePreset } from '../types/api';
 
 interface FilterBarProps {
@@ -13,13 +14,13 @@ interface FilterBarProps {
   onCurrencyChange: (c: 'USD' | 'EUR') => void;
 }
 
-const PRESETS: { id: DatePreset; label: string }[] = [
-  { id: 'today', label: 'Today' },
-  { id: '7d', label: 'Last 7 days' },
-  { id: '30d', label: 'Last 30 days' },
-  { id: 'current_month', label: 'Current month' },
-  { id: 'previous_month', label: 'Previous month' },
-  { id: 'custom', label: 'Custom range' },
+const PRESETS_FACTORY = (t: ReturnType<typeof useI18n>['t']): { id: DatePreset; label: string }[] => [
+  { id: 'today', label: t.filter.today },
+  { id: '7d', label: t.filter.last7 },
+  { id: '30d', label: t.filter.last30 },
+  { id: 'current_month', label: t.filter.currentMonth },
+  { id: 'previous_month', label: t.filter.previousMonth },
+  { id: 'custom', label: t.filter.customRange },
 ];
 
 export const FilterBar: React.FC<FilterBarProps> = ({
@@ -32,14 +33,15 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   currency,
   onCurrencyChange,
 }) => {
+  const { t } = useI18n();
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#1f2433] bg-[#11131c]/90 px-4 py-2.5 backdrop-blur">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="mr-1.5 flex items-center gap-1.5 text-xs font-medium text-slate-400">
           <Calendar className="h-3.5 w-3.5 text-indigo-400" />
-          Period:
+          {t.filter.period}
         </span>
-        {PRESETS.map((p) => (
+        {PRESETS_FACTORY(t).map((p) => (
           <button
             key={p.id}
             type="button"
@@ -63,7 +65,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               onChange={(e) => onStartDateChange(e.target.value)}
               className="rounded-md border border-[#1f2433] bg-[#090a0f] px-2 py-1 text-xs text-slate-200 focus:border-indigo-500 focus:outline-none"
             />
-            <span className="text-xs text-slate-500">to</span>
+            <span className="text-xs text-slate-500">a</span>
             <input
               type="date"
               aria-label="End date"
@@ -78,7 +80,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       <div className="flex items-center gap-2">
         <span className="flex items-center gap-1 text-xs text-slate-400">
           <Coins className="h-3.5 w-3.5 text-emerald-400" />
-          Currency:
+          {t.filter.currency}
         </span>
         <div className="inline-flex rounded-lg border border-[#1f2433] bg-[#090a0f] p-0.5">
           {(['USD', 'EUR'] as const).map((cur) => (

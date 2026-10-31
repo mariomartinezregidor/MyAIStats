@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Database, Download, Save, ShieldCheck, Upload } from 'lucide-react';
 import { api } from '../api/client';
+import { useI18n } from '../i18n';
 
 export const SettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const { t, lang, setLang } = useI18n();
   const { data: settings } = useQuery({
     queryKey: ['settings'],
     queryFn: api.getSettings,
@@ -34,7 +36,7 @@ export const SettingsPage: React.FC = () => {
   const updateMutation = useMutation({
     mutationFn: api.updateSettings,
     onSuccess: () => {
-      setStatusMsg('Settings saved and exchange rates updated.');
+      setStatusMsg(t.settings.settingsSaved);
       queryClient.invalidateQueries();
     },
   });
@@ -62,10 +64,10 @@ export const SettingsPage: React.FC = () => {
       body: formData,
     });
     if (res.ok) {
-      setStatusMsg('SQLite database restored from backup successfully.');
+      setStatusMsg(t.settings.restored);
       queryClient.invalidateQueries();
     } else {
-      setStatusMsg('Restore failed: invalid SQLite backup file.');
+      setStatusMsg(t.settings.restoreFailed);
     }
   };
 
@@ -73,10 +75,10 @@ export const SettingsPage: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-white">
-          Settings, Exports & Local Data Ownership
+          {t.settings.title}
         </h1>
         <p className="text-xs text-slate-400">
-          Configure synchronization intervals, currency conversion rates, demo mode, data exports, and SQLite database backups.
+          {t.settings.subtitle}
         </p>
       </div>
 
@@ -93,13 +95,27 @@ export const SettingsPage: React.FC = () => {
           className="space-y-4 rounded-xl border border-[#1f2433] bg-[#11131c] p-5"
         >
           <h2 className="text-sm font-semibold text-white">
-            Synchronization & Currency Configuration
+            {t.settings.syncCurrencyConfig}
           </h2>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-300">
+              {t.language}
+            </label>
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value as 'en' | 'es')}
+              className="mt-1 w-full rounded-lg border border-[#1f2433] bg-[#090a0f] px-3 py-2 text-xs text-slate-100"
+            >
+              <option value="en">{t.english}</option>
+              <option value="es">{t.spanish}</option>
+            </select>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-300">
-                Default Display Currency
+                {t.settings.defaultCurrency}
               </label>
               <select
                 value={defaultCurrency}
@@ -113,7 +129,7 @@ export const SettingsPage: React.FC = () => {
 
             <div>
               <label className="block text-xs font-medium text-slate-300">
-                Stored USD → EUR Rate
+                {t.settings.storedRate}
               </label>
               <input
                 type="number"
@@ -127,9 +143,9 @@ export const SettingsPage: React.FC = () => {
 
           <div className="flex items-center justify-between rounded-lg border border-[#1f2433] bg-[#0c0e16] p-3">
             <div>
-              <div className="text-xs font-semibold text-white">Demo Mode</div>
+              <div className="text-xs font-semibold text-white">{t.settings.demoMode}</div>
               <div className="text-[11px] text-slate-400">
-                Display clearly labeled [DEMO] sample records alongside real accounts
+                {t.settings.demoModeDesc}
               </div>
             </div>
             <input
@@ -144,7 +160,7 @@ export const SettingsPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-300">
-                Usage Sync Interval (minutes)
+                {t.settings.usageSyncInterval}
               </label>
               <input
                 type="number"
@@ -156,7 +172,7 @@ export const SettingsPage: React.FC = () => {
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-300">
-                Costs Sync Interval (minutes)
+                {t.settings.costsSyncInterval}
               </label>
               <input
                 type="number"
@@ -168,7 +184,7 @@ export const SettingsPage: React.FC = () => {
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-300">
-                Balances Sync Interval (minutes)
+                {t.settings.balancesSyncInterval}
               </label>
               <input
                 type="number"
@@ -180,7 +196,7 @@ export const SettingsPage: React.FC = () => {
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-300">
-                Model Pricing Interval (minutes)
+                {t.settings.pricingSyncInterval}
               </label>
               <input
                 type="number"
@@ -198,7 +214,7 @@ export const SettingsPage: React.FC = () => {
             className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500"
           >
             <Save className="h-3.5 w-3.5" />
-            Save Configuration
+            {t.settings.saveConfig}
           </button>
         </form>
 
@@ -208,11 +224,11 @@ export const SettingsPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <Database className="h-4 w-4 text-indigo-400" />
               <h2 className="text-sm font-semibold text-white">
-                CSV / JSON Exports & SQLite Database Backup
+                {t.settings.exportsBackup}
               </h2>
             </div>
             <p className="mt-1 text-xs text-slate-400">
-              Export normalized records or create a full binary backup of your local SQLite database.
+              {t.settings.exportsBackupDesc}
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -245,12 +261,12 @@ export const SettingsPage: React.FC = () => {
                 className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600/20 border border-emerald-500/30 px-3.5 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-600/30"
               >
                 <Download className="h-3.5 w-3.5" />
-                Download SQLite Backup (.db)
+                {t.settings.downloadBackup}
               </a>
 
               <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#1f2433] bg-[#0c0e16] px-3.5 py-2 text-xs font-medium text-slate-200 hover:border-indigo-500/40">
                 <Upload className="h-3.5 w-3.5 text-indigo-400" />
-                <span>Restore SQLite Backup</span>
+                <span>{t.settings.restoreBackup}</span>
                 <input
                   type="file"
                   accept=".db,.sqlite,.sqlite3"
@@ -265,18 +281,18 @@ export const SettingsPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-emerald-400" />
               <h2 className="text-sm font-semibold text-white">
-                Local-First Security Guarantees
+                {t.settings.localFirstSecurity}
               </h2>
             </div>
             <ul className="mt-3 space-y-2 text-xs text-slate-400">
               <li>
-                • <strong className="text-slate-200">127.0.0.1 Binding:</strong> Backend binds exclusively to localhost by default.
+                • <strong className="text-slate-200">{t.settings.localhostBinding}</strong> {t.settings.localhostBindingDesc}
               </li>
               <li>
-                • <strong className="text-slate-200">Fernet Credential Vault:</strong> API keys are encrypted at rest using AES-128-CBC + HMAC-SHA256 and never sent back to the browser or stored in localStorage.
+                • <strong className="text-slate-200">{t.settings.fernetVault}</strong> {t.settings.fernetVaultDesc}
               </li>
               <li>
-                • <strong className="text-slate-200">SSRF Outbound Allowlist:</strong> Outbound HTTP requests are restricted strictly to verified official provider API hostnames over HTTPS.
+                • <strong className="text-slate-200">{t.settings.ssrfAllowlist}</strong> {t.settings.ssrfAllowlistDesc}
               </li>
             </ul>
           </div>

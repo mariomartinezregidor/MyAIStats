@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { I18nProvider } from './i18n';
 import { Layout } from './components/Layout';
 import { OverviewPage } from './pages/OverviewPage';
 import { ProvidersPage } from './pages/ProvidersPage';
@@ -83,9 +84,11 @@ export const AppContent: React.FC = () => {
 export function App() {
   return (
     <QueryClientProvider client={defaultQueryClient}>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
+      <I18nProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </I18nProvider>
     </QueryClientProvider>
   );
 }

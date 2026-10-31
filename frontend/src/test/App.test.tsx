@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { I18nProvider } from '../i18n';
 import { AppContent } from '../App';
 
 const mockSummary = {
@@ -192,9 +193,11 @@ describe('MyAIStats Dashboard UI', () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={qc}>
-        <MemoryRouter initialEntries={['/']}>
-          <AppContent />
-        </MemoryRouter>
+        <I18nProvider>
+          <MemoryRouter initialEntries={['/']}>
+            <AppContent />
+          </MemoryRouter>
+        </I18nProvider>
       </QueryClientProvider>
     );
 
@@ -213,9 +216,11 @@ describe('MyAIStats Dashboard UI', () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={qc}>
-        <MemoryRouter initialEntries={['/balances']}>
-          <AppContent />
-        </MemoryRouter>
+        <I18nProvider>
+          <MemoryRouter initialEntries={['/balances']}>
+            <AppContent />
+          </MemoryRouter>
+        </I18nProvider>
       </QueryClientProvider>
     );
 
@@ -231,9 +236,11 @@ describe('MyAIStats Dashboard UI', () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={qc}>
-        <MemoryRouter initialEntries={['/providers']}>
-          <AppContent />
-        </MemoryRouter>
+        <I18nProvider>
+          <MemoryRouter initialEntries={['/providers']}>
+            <AppContent />
+          </MemoryRouter>
+        </I18nProvider>
       </QueryClientProvider>
     );
 
@@ -249,9 +256,11 @@ describe('MyAIStats Dashboard UI', () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={qc}>
-        <MemoryRouter initialEntries={['/settings']}>
-          <AppContent />
-        </MemoryRouter>
+        <I18nProvider>
+          <MemoryRouter initialEntries={['/settings']}>
+            <AppContent />
+          </MemoryRouter>
+        </I18nProvider>
       </QueryClientProvider>
     );
 

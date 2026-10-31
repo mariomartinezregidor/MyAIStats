@@ -11,9 +11,11 @@ import {
   XCircle,
 } from 'lucide-react';
 import { api } from '../api/client';
+import { useI18n } from '../i18n';
 
 export const ProvidersPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
   const [providerId, setProviderId] = useState('openai');
   const [name, setName] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -97,10 +99,10 @@ export const ProvidersPage: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-white">
-          Providers & Accounts
+          {t.providers.title}
         </h1>
         <p className="text-xs text-slate-400">
-          Connect multiple API accounts per provider. Credentials are encrypted locally with Fernet and never returned to the browser.
+          {t.providers.subtitle}
         </p>
       </div>
 
@@ -124,11 +126,11 @@ export const ProvidersPage: React.FC = () => {
         >
           <div className="flex items-center gap-2">
             <Plus className="h-4 w-4 text-indigo-400" />
-            <h2 className="text-sm font-semibold text-white">Connect Provider Account</h2>
+            <h2 className="text-sm font-semibold text-white">{t.providers.connectAccount}</h2>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300">Provider</label>
+            <label className="block text-xs font-medium text-slate-300">{t.providers.provider}</label>
             <select
               aria-label="Provider"
               value={providerId}
@@ -157,19 +159,19 @@ export const ProvidersPage: React.FC = () => {
                 rel="noreferrer"
                 className="mt-2 inline-flex items-center gap-1 text-indigo-400 hover:underline"
               >
-                Official API Documentation <ExternalLink className="h-3 w-3" />
+                {t.providers.docsLink} <ExternalLink className="h-3 w-3" />
               </a>
             </div>
           )}
 
           <div>
             <label className="block text-xs font-medium text-slate-300">
-              Account Label (Multiple accounts per provider supported)
+              {t.providers.accountLabel}
             </label>
             <input
               type="text"
               required
-              placeholder="e.g., Production Organization / Personal R&D"
+              placeholder={t.providers.accountLabelPlaceholder}
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="mt-1 w-full rounded-lg border border-[#1f2433] bg-[#090a0f] px-3 py-2 text-xs text-slate-100 focus:border-indigo-500 focus:outline-none"
@@ -177,7 +179,7 @@ export const ProvidersPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300">API Key</label>
+            <label className="block text-xs font-medium text-slate-300">{t.providers.apiKey}</label>
             <div className="relative mt-1">
               <input
                 type="password"
@@ -195,7 +197,7 @@ export const ProvidersPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-300">
-                Organization ID (Optional)
+                {t.providers.orgId}
               </label>
               <input
                 type="text"
@@ -207,7 +209,7 @@ export const ProvidersPage: React.FC = () => {
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-300">
-                Low-Balance Alert ($)
+                {t.providers.lowBalanceAlert}
               </label>
               <input
                 type="number"
@@ -225,15 +227,15 @@ export const ProvidersPage: React.FC = () => {
             disabled={connectMutation.isPending}
             className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:opacity-50"
           >
-            {connectMutation.isPending ? 'Testing & Encrypting...' : 'Connect & Verify Account'}
+            {connectMutation.isPending ? t.providers.connecting : t.providers.connectBtn}
           </button>
         </form>
 
         {/* Connected Accounts Table */}
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5 lg:col-span-2">
-          <h2 className="text-sm font-semibold text-white">Connected Accounts</h2>
+          <h2 className="text-sm font-semibold text-white">{t.providers.connectedAccounts}</h2>
           <p className="mb-4 text-xs text-slate-400">
-            Test connectivity, trigger manual synchronization, or remove credentials
+            {t.providers.connectedAccountsDesc}
           </p>
 
           <div className="space-y-3">
@@ -260,10 +262,10 @@ export const ProvidersPage: React.FC = () => {
                     )}
                   </div>
                   <div className="text-xs text-slate-400">
-                    Key Hint: <span className="font-mono text-slate-300">{acc.masked_key_hint}</span>
+                    {t.providers.keyHint} <span className="font-mono text-slate-300">{acc.masked_key_hint}</span>
                     {acc.last_sync_at && (
                       <span className="ml-3">
-                        • Last synced: {new Date(acc.last_sync_at).toLocaleString()}
+                        • {t.providers.lastSynced} {new Date(acc.last_sync_at).toLocaleString()}
                       </span>
                     )}
                   </div>
@@ -278,7 +280,7 @@ export const ProvidersPage: React.FC = () => {
                     onClick={() => testMutation.mutate(acc.id)}
                     className="rounded-lg border border-[#1f2433] bg-[#141824] px-3 py-1.5 text-xs font-medium text-slate-200 hover:border-indigo-500/40"
                   >
-                    Test Connection
+                    {t.providers.testConnection}
                   </button>
                   <button
                     type="button"
@@ -286,7 +288,7 @@ export const ProvidersPage: React.FC = () => {
                     className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-500/30 bg-indigo-600/20 px-3 py-1.5 text-xs font-medium text-indigo-200 hover:bg-indigo-600/30"
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
-                    Sync
+                    {t.providers.sync}
                   </button>
                   {!acc.is_demo && (
                     <button
@@ -311,7 +313,7 @@ export const ProvidersPage: React.FC = () => {
           Verified Official Provider Capability Matrix
         </h2>
         <p className="mb-4 text-xs text-slate-400">
-          MyAIStats strictly queries documented, official APIs and never scrapes or fabricates unsupported capabilities.
+          {t.providers.officialCapabilityMatrixDesc}
         </p>
 
         <div className="overflow-x-auto">
@@ -319,13 +321,13 @@ export const ProvidersPage: React.FC = () => {
             <thead>
               <tr className="border-b border-[#1f2433] text-slate-400">
                 <th className="pb-3 font-medium">Provider</th>
-                <th className="pb-3 font-medium">Priority</th>
-                <th className="pb-3 font-medium">Connection Test</th>
-                <th className="pb-3 font-medium">Token Usage API</th>
-                <th className="pb-3 font-medium">Official Costs API</th>
-                <th className="pb-3 font-medium">Confirmed Balance API</th>
-                <th className="pb-3 font-medium">Model Pricing</th>
-                <th className="pb-3 font-medium">Verification Notes</th>
+                <th className="pb-3 font-medium">{t.providers.priority}</th>
+                <th className="pb-3 font-medium">{t.providers.connectionTest}</th>
+                <th className="pb-3 font-medium">{t.providers.tokenUsageApi}</th>
+                <th className="pb-3 font-medium">{t.providers.officialCostsApi}</th>
+                <th className="pb-3 font-medium">{t.providers.confirmedBalanceApi}</th>
+                <th className="pb-3 font-medium">{t.providers.modelPricing}</th>
+                <th className="pb-3 font-medium">{t.providers.verificationNotes}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1f2433]">

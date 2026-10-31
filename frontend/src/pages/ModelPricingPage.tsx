@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Cpu, Search } from 'lucide-react';
 import { api } from '../api/client';
+import { useI18n } from '../i18n';
 
 export const ModelPricingPage: React.FC = () => {
+  const { t } = useI18n();
   const [providerFilter, setProviderFilter] = useState('');
   const [search, setSearch] = useState('');
   const [includeHistory, setIncludeHistory] = useState(false);
@@ -32,9 +34,9 @@ export const ModelPricingPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Model Pricing Catalog</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">{t.pricing.title}</h1>
           <p className="text-xs text-slate-400">
-            Official per-1M token pricing used for cost estimation when actual billed costs are not returned by a provider. Historical price changes are preserved.
+            {t.pricing.subtitle}
           </p>
         </div>
 
@@ -42,7 +44,7 @@ export const ModelPricingPage: React.FC = () => {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search models..."
+              placeholder={t.pricing.searchModels}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="rounded-lg border border-[#1f2433] bg-[#11131c] pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:border-indigo-500 focus:outline-none"
@@ -56,7 +58,7 @@ export const ModelPricingPage: React.FC = () => {
             onChange={(e) => setProviderFilter(e.target.value)}
             className="rounded-lg border border-[#1f2433] bg-[#11131c] px-3 py-1.5 text-xs text-slate-200"
           >
-            <option value="">All Providers</option>
+            <option value="">{t.pricing.allProviders}</option>
             {(providers || []).map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -71,28 +73,28 @@ export const ModelPricingPage: React.FC = () => {
               onChange={(e) => setIncludeHistory(e.target.checked)}
               className="rounded border-slate-700 bg-slate-900"
             />
-            Include Historical Versions
+            {t.pricing.includeHistory}
           </label>
         </div>
       </div>
 
       <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
         {isLoading ? (
-          <div className="py-8 text-center text-xs text-slate-400">Loading model pricing...</div>
+          <div className="py-8 text-center text-xs text-slate-400">{t.pricing.loadingPricing}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-[#1f2433] text-slate-400">
-                  <th className="pb-3 font-medium">Model</th>
-                  <th className="pb-3 font-medium">Provider</th>
-                  <th className="pb-3 font-medium">Context Window</th>
-                  <th className="pb-3 font-medium">Input / 1M Tokens</th>
-                  <th className="pb-3 font-medium">Cached Input / 1M</th>
-                  <th className="pb-3 font-medium">Output / 1M Tokens</th>
-                  <th className="pb-3 font-medium">Currency</th>
-                  <th className="pb-3 font-medium">Source</th>
-                  <th className="pb-3 font-medium">Last Updated (UTC)</th>
+                  <th className="pb-3 font-medium">{t.pricing.model}</th>
+                  <th className="pb-3 font-medium">{t.pricing.provider}</th>
+                  <th className="pb-3 font-medium">{t.pricing.contextWindow}</th>
+                  <th className="pb-3 font-medium">{t.pricing.inputPer1M}</th>
+                  <th className="pb-3 font-medium">{t.pricing.cachedInputPer1M}</th>
+                  <th className="pb-3 font-medium">{t.pricing.outputPer1M}</th>
+                  <th className="pb-3 font-medium">{t.pricing.currency}</th>
+                  <th className="pb-3 font-medium">{t.pricing.source}</th>
+                  <th className="pb-3 font-medium">{t.pricing.lastUpdated}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1f2433]">

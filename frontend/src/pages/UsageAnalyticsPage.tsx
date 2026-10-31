@@ -11,6 +11,7 @@ import {
   YAxis,
 } from 'recharts';
 import { api, formatMoney, formatTokens } from '../api/client';
+import { useI18n } from '../i18n';
 import type { DatePreset } from '../types/api';
 
 interface UsageAnalyticsPageProps {
@@ -28,6 +29,7 @@ export const UsageAnalyticsPage: React.FC<UsageAnalyticsPageProps> = ({
   endDate,
   currency,
 }) => {
+  const { t } = useI18n();
   const [groupBy, setGroupBy] = useState<GroupDimension>('provider');
   const [providerFilter, setProviderFilter] = useState<string>('');
 
@@ -108,9 +110,9 @@ export const UsageAnalyticsPage: React.FC<UsageAnalyticsPageProps> = ({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Usage Analytics</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">{t.analytics.title}</h1>
           <p className="text-xs text-slate-400">
-            Analyze input, output, and cached tokens alongside separated actual and estimated costs.
+            {t.analytics.subtitle}
           </p>
         </div>
 
@@ -121,7 +123,7 @@ export const UsageAnalyticsPage: React.FC<UsageAnalyticsPageProps> = ({
             onChange={(e) => setProviderFilter(e.target.value)}
             className="rounded-lg border border-[#1f2433] bg-[#11131c] px-3 py-1.5 text-xs text-slate-200"
           >
-            <option value="">All Providers</option>
+            <option value="">{t.analytics.allProviders}</option>
             {(providers || []).map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -141,7 +143,7 @@ export const UsageAnalyticsPage: React.FC<UsageAnalyticsPageProps> = ({
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                By {dim}
+                {dim === 'provider' ? t.analytics.byProvider : dim === 'account' ? t.analytics.byAccount : dim === 'model' ? t.analytics.byModel : t.analytics.byDate}
               </button>
             ))}
           </div>
@@ -152,7 +154,7 @@ export const UsageAnalyticsPage: React.FC<UsageAnalyticsPageProps> = ({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
           <h2 className="text-sm font-semibold text-white capitalize">
-            Token Consumption Grouped by {groupBy}
+            {t.analytics.tokenConsumption} {groupBy}
           </h2>
           <p className="mb-4 text-xs text-slate-400">
             Input, Output, and Cached Input tokens
@@ -181,10 +183,10 @@ export const UsageAnalyticsPage: React.FC<UsageAnalyticsPageProps> = ({
 
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
           <h2 className="text-sm font-semibold text-white capitalize">
-            Actual vs. Estimated Costs Grouped by {groupBy}
+            {t.analytics.actualVsEstimated} {groupBy}
           </h2>
           <p className="mb-4 text-xs text-slate-400">
-            Displayed in {currency}
+            {t.analytics.displayedIn} {currency}
           </p>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -211,25 +213,25 @@ export const UsageAnalyticsPage: React.FC<UsageAnalyticsPageProps> = ({
       {/* Grouped Breakdown Table */}
       <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
         <h2 className="mb-4 text-sm font-semibold text-white capitalize">
-          Detailed Breakdown by {groupBy}
+          {t.analytics.detailedBreakdown} {groupBy}
         </h2>
 
         {isLoading ? (
-          <div className="py-8 text-center text-xs text-slate-400">Loading usage analytics...</div>
+          <div className="py-8 text-center text-xs text-slate-400">{t.analytics.loadingUsage}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-[#1f2433] text-slate-400">
                   <th className="pb-3 font-medium capitalize">{groupBy}</th>
-                  <th className="pb-3 font-medium">Requests</th>
-                  <th className="pb-3 font-medium">Input Tokens</th>
-                  <th className="pb-3 font-medium">Cached Input</th>
-                  <th className="pb-3 font-medium">Output Tokens</th>
-                  <th className="pb-3 font-medium">Total Tokens</th>
-                  <th className="pb-3 font-medium text-emerald-400">Actual Cost</th>
-                  <th className="pb-3 font-medium text-amber-400">Estimated Cost</th>
-                  <th className="pb-3 font-medium">Total Spend</th>
+                  <th className="pb-3 font-medium">{t.analytics.requests}</th>
+                  <th className="pb-3 font-medium">{t.analytics.inputTokens}</th>
+                  <th className="pb-3 font-medium">{t.analytics.cachedInput}</th>
+                  <th className="pb-3 font-medium">{t.analytics.outputTokens}</th>
+                  <th className="pb-3 font-medium">{t.analytics.totalTokens}</th>
+                  <th className="pb-3 font-medium text-emerald-400">{t.analytics.actualCost}</th>
+                  <th className="pb-3 font-medium text-amber-400">{t.analytics.estimatedCost}</th>
+                  <th className="pb-3 font-medium">{t.analytics.totalSpend}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1f2433]">

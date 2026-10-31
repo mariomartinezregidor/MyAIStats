@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { api, formatMoney, formatTokens } from '../api/client';
+import { useI18n } from '../i18n';
 import type { DatePreset } from '../types/api';
 
 interface HistoryPageProps {
@@ -19,6 +20,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
   endDate,
   currency,
 }) => {
+  const { t } = useI18n();
   const [tab, setTab] = useState<HistoryTab>('usage');
   const [page, setPage] = useState(1);
   const [providerFilter, setProviderFilter] = useState('');
@@ -77,9 +79,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Historical Records</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">{t.history.title}</h1>
           <p className="text-xs text-slate-400">
-            Audit-ready usage buckets, separated actual vs. estimated cost records, and synchronization jobs.
+            {t.history.subtitle}
           </p>
         </div>
 
@@ -89,14 +91,14 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
             className="inline-flex items-center gap-1.5 rounded-lg border border-[#1f2433] bg-[#11131c] px-3 py-1.5 text-xs font-medium text-slate-200 hover:border-indigo-500/40"
           >
             <Download className="h-3.5 w-3.5 text-indigo-400" />
-            Export CSV
+            {t.history.exportCsv}
           </a>
           <a
             href={`/api/export/json?dataset=${tab === 'sync' ? 'usage' : tab}&preset=${preset}`}
             className="inline-flex items-center gap-1.5 rounded-lg border border-[#1f2433] bg-[#11131c] px-3 py-1.5 text-xs font-medium text-slate-200 hover:border-indigo-500/40"
           >
             <Download className="h-3.5 w-3.5 text-emerald-400" />
-            Export JSON
+            {t.history.exportJson}
           </a>
         </div>
       </div>
@@ -106,9 +108,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
         <div className="inline-flex rounded-xl border border-[#1f2433] bg-[#11131c] p-1">
           {(
             [
-              { id: 'usage', label: 'Usage Records' },
-              { id: 'costs', label: 'Cost Records (Actual vs Estimated)' },
-              { id: 'sync', label: 'Synchronization Audit Log' },
+              { id: 'usage', label: t.history.usageRecords },
+              { id: 'costs', label: t.history.costRecords },
+              { id: 'sync', label: t.history.syncAuditLog },
             ] as { id: HistoryTab; label: string }[]
           ).map((t) => (
             <button
@@ -139,7 +141,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
             }}
             className="rounded-lg border border-[#1f2433] bg-[#11131c] px-3 py-1.5 text-xs text-slate-200"
           >
-            <option value="">All Providers</option>
+            <option value="">{t.analytics.allProviders}</option>
             {(providers || []).map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -156,14 +158,14 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-[#1f2433] text-slate-400">
-                  <th className="pb-3 font-medium">Timestamp (UTC)</th>
+                  <th className="pb-3 font-medium">{t.history.timestampUtc}</th>
                   <th className="pb-3 font-medium">Provider / Account</th>
-                  <th className="pb-3 font-medium">Model</th>
-                  <th className="pb-3 font-medium">Input</th>
-                  <th className="pb-3 font-medium">Cached</th>
-                  <th className="pb-3 font-medium">Output</th>
-                  <th className="pb-3 font-medium">Cost Category</th>
-                  <th className="pb-3 font-medium">Amount ({currency})</th>
+                  <th className="pb-3 font-medium">{t.history.model}</th>
+                  <th className="pb-3 font-medium">{t.history.input}</th>
+                  <th className="pb-3 font-medium">{t.history.cached}</th>
+                  <th className="pb-3 font-medium">{t.history.output}</th>
+                  <th className="pb-3 font-medium">{t.history.costCategory}</th>
+                  <th className="pb-3 font-medium">{t.history.amount} ({currency})</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1f2433]">
@@ -213,13 +215,13 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-[#1f2433] text-slate-400">
-                  <th className="pb-3 font-medium">Period Start</th>
+                  <th className="pb-3 font-medium">{t.history.periodStart}</th>
                   <th className="pb-3 font-medium">Provider / Account</th>
-                  <th className="pb-3 font-medium">Line Item / Model</th>
-                  <th className="pb-3 font-medium">Category</th>
-                  <th className="pb-3 font-medium">Original Amount</th>
-                  <th className="pb-3 font-medium">Converted ({currency})</th>
-                  <th className="pb-3 font-medium">FX Rate & Date</th>
+                  <th className="pb-3 font-medium">{t.history.lineItem}</th>
+                  <th className="pb-3 font-medium">{t.history.category}</th>
+                  <th className="pb-3 font-medium">{t.history.originalAmount}</th>
+                  <th className="pb-3 font-medium">{t.history.converted} ({currency})</th>
+                  <th className="pb-3 font-medium">{t.history.fxRateDate}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1f2433]">
@@ -265,12 +267,12 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-[#1f2433] text-slate-400">
-                  <th className="pb-3 font-medium">Started At (UTC)</th>
+                  <th className="pb-3 font-medium">{t.history.startedAt}</th>
                   <th className="pb-3 font-medium">Provider</th>
-                  <th className="pb-3 font-medium">Scope</th>
-                  <th className="pb-3 font-medium">Status</th>
-                  <th className="pb-3 font-medium">Records Synced</th>
-                  <th className="pb-3 font-medium">Message / Error Details</th>
+                  <th className="pb-3 font-medium">{t.history.scope}</th>
+                  <th className="pb-3 font-medium">{t.history.status}</th>
+                  <th className="pb-3 font-medium">{t.history.recordsSynced}</th>
+                  <th className="pb-3 font-medium">{t.history.messageError}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1f2433]">
@@ -301,9 +303,8 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
         {tab !== 'sync' && (
           <div className="mt-4 flex items-center justify-between border-t border-[#1f2433] pt-4 text-xs text-slate-400">
             <div>
-              Showing page <span className="font-semibold text-white">{page}</span> of{' '}
-              <span className="font-semibold text-white">{totalPages}</span> ({totalItems} total
-              records)
+              {t.history.showingPage} <span className="font-semibold text-white">{page}</span> {t.history.of}{' '}
+              <span className="font-semibold text-white">{totalPages}</span> ({totalItems} {t.history.totalRecords})
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -313,7 +314,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
                 className="inline-flex items-center gap-1 rounded-lg border border-[#1f2433] bg-[#0c0e16] px-2.5 py-1 text-slate-200 disabled:opacity-40"
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
-                Prev
+                {t.history.prev}
               </button>
               <button
                 type="button"
@@ -321,7 +322,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 className="inline-flex items-center gap-1 rounded-lg border border-[#1f2433] bg-[#0c0e16] px-2.5 py-1 text-slate-200 disabled:opacity-40"
               >
-                Next
+                {t.history.next}
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </div>

@@ -9,6 +9,8 @@
 
 MyAIStats is an open-source, local-first application for tracking AI API usage, tokens, costs, credits, balances, and model pricing from one private dashboard. It runs on your machine, requires no registration, and keeps credentials and historical data local.
 
+[Leer en español](README.es.md)
+
 > **v0.1.0** — initial release. Demo Mode is enabled by default so the dashboard is useful before connecting an account.
 
 ## Why MyAIStats?

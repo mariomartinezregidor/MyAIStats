@@ -15,6 +15,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { api } from '../api/client';
+import { useI18n } from '../i18n';
 import { FilterBar } from './FilterBar';
 import type { DatePreset } from '../types/api';
 
@@ -30,14 +31,14 @@ interface LayoutProps {
   onCurrencyChange: (c: 'USD' | 'EUR') => void;
 }
 
-const NAV_ITEMS = [
-  { to: '/', label: 'Overview', icon: LayoutDashboard },
-  { to: '/providers', label: 'Providers', icon: Server },
-  { to: '/analytics', label: 'Usage Analytics', icon: BarChart3 },
-  { to: '/balances', label: 'Credits & Balance', icon: Wallet },
-  { to: '/pricing', label: 'Model Pricing', icon: Cpu },
-  { to: '/history', label: 'History', icon: Clock },
-  { to: '/settings', label: 'Settings', icon: Settings },
+const NAV_ITEMS_FACTORY = (t: ReturnType<typeof useI18n>['t']) => [
+  { to: '/', label: t.nav.overview, icon: LayoutDashboard },
+  { to: '/providers', label: t.nav.providers, icon: Server },
+  { to: '/analytics', label: t.nav.analytics, icon: BarChart3 },
+  { to: '/balances', label: t.nav.balances, icon: Wallet },
+  { to: '/pricing', label: t.nav.pricing, icon: Cpu },
+  { to: '/history', label: t.nav.history, icon: Clock },
+  { to: '/settings', label: t.nav.settings, icon: Settings },
 ];
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -52,6 +53,7 @@ export const Layout: React.FC<LayoutProps> = ({
   onCurrencyChange,
 }) => {
   const queryClient = useQueryClient();
+  const { t, lang, setLang } = useI18n();
 
   const { data: syncStatus } = useQuery({
     queryKey: ['syncStatus'],
@@ -84,9 +86,6 @@ export const Layout: React.FC<LayoutProps> = ({
               <span className="text-base font-bold tracking-tight text-white">
                 MyAIStats
               </span>
-              <span className="rounded bg-indigo-500/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-indigo-400">
-                v0.1.0
-              </span>
             </div>
             <p className="text-[11px] text-slate-400">
               All your AI usage. One dashboard.
@@ -95,7 +94,7 @@ export const Layout: React.FC<LayoutProps> = ({
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+          {NAV_ITEMS_FACTORY(t).map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -120,10 +119,10 @@ export const Layout: React.FC<LayoutProps> = ({
             <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-300">
               <div className="flex items-center gap-1.5 font-semibold">
                 <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                <span>Demo Mode Active</span>
+                <span>{t.demoModeActive}</span>
               </div>
               <p className="mt-1 text-[11px] text-amber-200/80">
-                Simulated records are labeled <span className="font-mono">[DEMO]</span>. Disable anytime in Settings.
+                {t.demoModeDesc}
               </p>
             </div>
           )}
@@ -131,7 +130,7 @@ export const Layout: React.FC<LayoutProps> = ({
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-              Local-First Vault
+              {t.localFirstVault}
             </span>
             <span className="font-mono text-[11px] text-slate-500">127.0.0.1</span>
           </div>
@@ -148,8 +147,8 @@ export const Layout: React.FC<LayoutProps> = ({
               }`}
             />
             {syncMutation.isPending || syncStatus?.is_running
-              ? 'Synchronizing...'
-              : 'Sync All Accounts'}
+              ? t.synchronizing
+              : t.syncAllAccounts}
           </button>
         </div>
       </aside>
@@ -157,6 +156,17 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* Main Content */}
       <div className="flex flex-1 flex-col pl-64">
         <header className="sticky top-0 z-20 border-b border-[#1f2433] bg-[#090a0f]/80 px-6 py-3 backdrop-blur">
+          <div className="mb-2 flex justify-end">
+            <select
+              aria-label={t.language}
+              value={lang}
+              onChange={(e) => setLang(e.target.value as 'en' | 'es')}
+              className="rounded-lg border border-[#1f2433] bg-[#11131c] px-2 py-1 text-xs text-slate-200"
+            >
+              <option value="en">{t.english}</option>
+              <option value="es">{t.spanish}</option>
+            </select>
+          </div>
           <FilterBar
             preset={preset}
             onPresetChange={onPresetChange}

@@ -26,6 +26,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { api, formatMoney, formatTokens } from '../api/client';
+import { useI18n } from '../i18n';
 import type { DatePreset } from '../types/api';
 
 interface OverviewPageProps {
@@ -41,6 +42,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
   endDate,
   currency,
 }) => {
+  const { t } = useI18n();
   const { data: summary, isLoading: loadingSummary } = useQuery({
     queryKey: ['dashboardSummary', preset, startDate, endDate, currency],
     queryFn: () =>
@@ -87,16 +89,16 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white">
-            Overview Dashboard
+            {t.overview.title}
           </h1>
           <p className="text-xs text-slate-400">
-            Unified API spending, confirmed balances, and token analytics •{' '}
+            {t.overview.subtitle} •{' '}
             <span className="font-mono text-slate-300">{summary.exchange_rate_note}</span>
           </p>
         </div>
         {summary.demo_mode_active && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300">
-            Includes Clearly Labeled [DEMO] Data
+            {t.overview.includesDemo}
           </span>
         )}
       </div>
@@ -107,7 +109,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
-              Total Spending
+              {t.overview.totalSpending}
             </span>
             <DollarSign className="h-4 w-4 text-indigo-400" />
           </div>
@@ -118,7 +120,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-emerald-400">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                Actual Billed Costs:
+                {t.overview.actualBilledCosts}
               </span>
               <span className="font-mono font-semibold text-slate-200">
                 {formatMoney(summary.actual_billed_cost, summary.display_currency)}
@@ -127,7 +129,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-amber-400">
                 <span className="h-2 w-2 rounded-full bg-amber-400" />
-                Estimated Costs:
+                {t.overview.estimatedCosts}
               </span>
               <span className="font-mono font-semibold text-slate-200">
                 {formatMoney(summary.estimated_cost, summary.display_currency)}
@@ -140,7 +142,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
-              Confirmed Available Balance
+              {t.overview.confirmedBalance}
             </span>
             <Wallet className="h-4 w-4 text-emerald-400" />
           </div>
@@ -155,9 +157,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
               </span>
             </div>
             <div className="flex justify-between">
-              <span>Unsupported API Balance:</span>
+              <span>{t.overview.unsupportedApi}</span>
               <span className="font-mono text-slate-400">
-                {summary.unsupported_balance_accounts_count} (Never guessed)
+                {summary.unsupported_balance_accounts_count} {t.overview.neverGuessed}
               </span>
             </div>
           </div>
@@ -167,7 +169,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
-              Input Tokens
+              {t.overview.inputTokens}
             </span>
             <ArrowUpRight className="h-4 w-4 text-cyan-400" />
           </div>
@@ -176,13 +178,13 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
           </div>
           <div className="mt-3 space-y-1 border-t border-[#1f2433] pt-2.5 text-xs text-slate-400">
             <div className="flex justify-between">
-              <span>Cached Input Tokens:</span>
+              <span>{t.overview.cachedInputTokens}</span>
               <span className="font-mono text-cyan-300">
                 {formatTokens(summary.cached_input_tokens)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span>Exact Count:</span>
+              <span>{t.overview.exactCount}</span>
               <span className="font-mono text-slate-300">
                 {summary.input_tokens.toLocaleString()}
               </span>
@@ -194,7 +196,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
-              Output Tokens
+              {t.overview.outputTokens}
             </span>
             <ArrowDownRight className="h-4 w-4 text-violet-400" />
           </div>
@@ -203,13 +205,13 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
           </div>
           <div className="mt-3 space-y-1 border-t border-[#1f2433] pt-2.5 text-xs text-slate-400">
             <div className="flex justify-between">
-              <span>Total Combined Tokens:</span>
+              <span>{t.overview.totalCombinedTokens}</span>
               <span className="font-mono text-violet-300">
                 {formatTokens(summary.total_tokens)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span>Exact Count:</span>
+              <span>{t.overview.exactCount}</span>
               <span className="font-mono text-slate-300">
                 {summary.output_tokens.toLocaleString()}
               </span>
@@ -224,10 +226,10 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold text-white">
-                Daily Spending (Actual Billed vs. Estimated)
+                {t.overview.dailySpending}
               </h2>
               <p className="text-xs text-slate-400">
-                Never mixes official billed charges with calculated token estimates
+                {t.overview.dailySpendingDesc}
               </p>
             </div>
           </div>
@@ -269,9 +271,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         </div>
 
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
-          <h2 className="text-sm font-semibold text-white">Monthly Spending</h2>
+          <h2 className="text-sm font-semibold text-white">{t.overview.monthlySpending}</h2>
           <p className="mb-4 text-xs text-slate-400">
-            Aggregated monthly Actual vs. Estimated spend
+            {t.overview.monthlySpendingDesc}
           </p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -303,9 +305,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
       {/* Charts Row 2: Spending by Provider & Spending by Model */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
-          <h2 className="text-sm font-semibold text-white">Spending by Provider</h2>
+          <h2 className="text-sm font-semibold text-white">{t.overview.spendingByProvider}</h2>
           <p className="mb-4 text-xs text-slate-400">
-            Breakdown of Actual vs. Estimated costs across providers
+            {t.overview.spendingByProviderDesc}
           </p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -335,9 +337,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         </div>
 
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
-          <h2 className="text-sm font-semibold text-white">Spending by Model</h2>
+          <h2 className="text-sm font-semibold text-white">{t.overview.spendingByModel}</h2>
           <p className="mb-4 text-xs text-slate-400">
-            Top AI models ranked by cost in {summary.display_currency}
+            {t.overview.spendingByModelDesc} {summary.display_currency}
           </p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -370,9 +372,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
       {/* Charts Row 3: Token Consumption & Confirmed Balance History */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
-          <h2 className="text-sm font-semibold text-white">Daily Token Consumption</h2>
+          <h2 className="text-sm font-semibold text-white">{t.overview.dailyTokenConsumption}</h2>
           <p className="mb-4 text-xs text-slate-400">
-            Input tokens, Output tokens, and Cached input tokens
+            {t.overview.dailyTokenConsumptionDesc}
           </p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -397,9 +399,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         </div>
 
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
-          <h2 className="text-sm font-semibold text-white">Confirmed Balance History</h2>
+          <h2 className="text-sm font-semibold text-white">{t.overview.confirmedBalanceHistory}</h2>
           <p className="mb-4 text-xs text-slate-400">
-            Available credit trajectory for providers with official balance APIs
+            {t.overview.confirmedBalanceHistoryDesc}
           </p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -434,7 +436,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         {/* Connected Accounts */}
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Connected Accounts</h2>
+            <h2 className="text-sm font-semibold text-white">{t.overview.connectedAccounts}</h2>
             <Layers className="h-4 w-4 text-indigo-400" />
           </div>
           <div className="space-y-2.5">
@@ -467,7 +469,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         {/* Recent Sync Jobs */}
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Recent Synchronization Jobs</h2>
+            <h2 className="text-sm font-semibold text-white">{t.overview.recentSyncJobs}</h2>
             <Cpu className="h-4 w-4 text-cyan-400" />
           </div>
           <div className="space-y-2.5">
@@ -493,7 +495,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         {/* Recent Activity */}
         <div className="rounded-xl border border-[#1f2433] bg-[#11131c] p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Recent Token Activity</h2>
+            <h2 className="text-sm font-semibold text-white">{t.overview.recentTokenActivity}</h2>
             <Coins className="h-4 w-4 text-amber-400" />
           </div>
           <div className="space-y-2">
