@@ -1,11 +1,44 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, CheckCircle2, HelpCircle, Wallet } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CreditCard, ExternalLink, HelpCircle, Wallet } from 'lucide-react';
 import { api, formatMoney } from '../api/client';
 import { useI18n } from '../i18n';
 
 interface CreditsBalancePageProps {
   currency: 'USD' | 'EUR';
+}
+
+const RECHARGE_URLS: Record<string, string> = {
+  openai: 'https://platform.openai.com/settings/organization/billing',
+  openrouter: 'https://openrouter.ai/credits',
+  anthropic: 'https://console.anthropic.com/settings/billing',
+  deepseek: 'https://platform.deepseek.com/top_up',
+  google: 'https://console.cloud.google.com/billing',
+  groq: 'https://console.groq.com/settings/billing',
+  mistral: 'https://console.mistral.ai/billing',
+  together: 'https://api.together.ai/settings/billing',
+  fireworks: 'https://app.fireworks.ai/account/billing',
+  morph: 'https://morphllm.com/',
+  refuseless: 'https://refuseless.com/',
+  opencode: 'https://opencode.ai/',
+};
+
+function resolveRechargeUrl(item: {
+  provider_id: string;
+  billing_url?: string | null;
+  top_up_url?: string | null;
+  recharge_url?: string | null;
+  payment_url?: string | null;
+}, providerMap: Record<string, string>): string {
+  return (
+    item.billing_url ||
+    item.top_up_url ||
+    item.recharge_url ||
+    item.payment_url ||
+    providerMap[item.provider_id] ||
+    RECHARGE_URLS[item.provider_id] ||
+    '#'
+  );
 }
 
 export const CreditsBalancePage: React.FC<CreditsBalancePageProps> = ({ currency }) => {
@@ -14,6 +47,18 @@ export const CreditsBalancePage: React.FC<CreditsBalancePageProps> = ({ currency
     queryKey: ['balances', currency],
     queryFn: () => api.getBalances(currency),
   });
+
+  const { data: providers } = useQuery({
+    queryKey: ['providers'],
+    queryFn: api.getProviders,
+  });
+
+  const providerMap: Record<string, string> = {};
+  for (const p of providers || []) {
+    const url =
+      p.billing_url || p.top_up_url || p.recharge_url || p.payment_url || p.docs_url;
+    if (url) providerMap[p.id] = url;
+  }
 
   if (isLoading || !balances) {
     return (
@@ -26,6 +71,24 @@ export const CreditsBalancePage: React.FC<CreditsBalancePageProps> = ({ currency
   const supported = balances.filter((b) => b.is_supported);
   const unsupported = balances.filter((b) => !b.is_supported);
 
+  const renderRecharge = (item: (typeof balances)[number]) => {
+    const url = resolveRechargeUrl(item, providerMap);
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        data-testid="recharge-button"
+        aria-label={t.balances.recharge}
+        className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-indigo-500/30 bg-indigo-600/20 px-3 py-1.5 text-xs font-medium text-indigo-200 hover:bg-indigo-600/30"
+      >
+        <CreditCard className="h-3.5 w-3.5" />
+        {t.balances.recharge}
+        <ExternalLink className="h-3 w-3" />
+      </a>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -35,9 +98,11 @@ export const CreditsBalancePage: React.FC<CreditsBalancePageProps> = ({ currency
         <p className="text-xs text-slate-400">
           {t.balances.subtitle}
         </p>
+        <p className="mt-2 text-[11px] text-slate-500">
+          {t.balances.rechargeNote}
+        </p>
       </div>
 
-      {/* Confirmed Balances Section */}
       <div className="space-y-3">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-emerald-400">
           <CheckCircle2 className="h-4 w-4" />
@@ -104,12 +169,12 @@ export const CreditsBalancePage: React.FC<CreditsBalancePageProps> = ({ currency
               {item.status_note && (
                 <p className="mt-2 text-[11px] text-slate-400">{item.status_note}</p>
               )}
+              {renderRecharge(item)}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Unsupported Balances Section */}
       <div className="space-y-3">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-300">
           <HelpCircle className="h-4 w-4 text-slate-400" />
@@ -133,6 +198,7 @@ export const CreditsBalancePage: React.FC<CreditsBalancePageProps> = ({ currency
                 </span>
               </div>
               <p className="mt-3 text-xs text-slate-400">{item.status_note}</p>
+              {renderRecharge(item)}
             </div>
           ))}
         </div>

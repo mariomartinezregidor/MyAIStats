@@ -10,6 +10,10 @@ class ProviderOut(BaseModel):
     category_priority: int
     api_base_url: str
     docs_url: str
+    billing_url: str | None = None
+    top_up_url: str | None = None
+    recharge_url: str | None = None
+    payment_url: str | None = None
     auth_instructions: str
     supports_connection_test: bool
     supports_usage: bool
@@ -148,7 +152,10 @@ class BalanceItemOut(BaseModel):
     status_note: str | None = None
     captured_at: datetime | None = None
     is_demo: bool = False
-
+    billing_url: str | None = None
+    top_up_url: str | None = None
+    recharge_url: str | None = None
+    payment_url: str | None = None
 
 class ModelPriceOut(BaseModel):
     id: int

@@ -65,6 +65,27 @@ from connectors.registry import get_connector
 
 router = APIRouter(prefix="/api")
 
+PROVIDER_BILLING_URLS: dict[str, str] = {
+    "openai": "https://platform.openai.com/settings/organization/billing",
+    "openrouter": "https://openrouter.ai/credits",
+    "anthropic": "https://console.anthropic.com/settings/billing",
+    "deepseek": "https://platform.deepseek.com/top_up",
+    "google": "https://console.cloud.google.com/billing",
+    "groq": "https://console.groq.com/settings/billing",
+    "mistral": "https://console.mistral.ai/billing",
+    "together": "https://api.together.ai/settings/billing",
+    "fireworks": "https://app.fireworks.ai/account/billing",
+    "morph": "https://morphllm.com/",
+    "refuseless": "https://refuseless.com/",
+    "opencode": "https://opencode.ai/",
+}
+
+
+def _provider_billing_url(provider_id: str, fallback: str | None = None) -> str | None:
+    url = PROVIDER_BILLING_URLS.get(provider_id)
+    if url:
+        return url
+    return fallback
 
 def _as_utc(dt: datetime | None) -> datetime | None:
     if dt is None:
@@ -134,6 +155,10 @@ def list_providers(db: Session = Depends(get_db)) -> list[ProviderOut]:
             category_priority=p.category_priority,
             api_base_url=p.api_base_url,
             docs_url=p.docs_url,
+            billing_url=_provider_billing_url(p.id, p.docs_url),
+            top_up_url=_provider_billing_url(p.id, p.docs_url),
+            recharge_url=_provider_billing_url(p.id, p.docs_url),
+            payment_url=_provider_billing_url(p.id, p.docs_url),
             auth_instructions=p.auth_instructions,
             supports_connection_test=p.supports_connection_test,
             supports_usage=p.supports_usage,
@@ -637,6 +662,7 @@ def get_balances(
                 and latest_snap.available_balance is not None
                 and latest_snap.available_balance <= acc.low_balance_threshold
             )
+            _billing = _provider_billing_url(acc.provider_id, prov.docs_url if prov else None)
             results.append(
                 BalanceItemOut(
                     account_id=acc.id,
@@ -655,6 +681,10 @@ def get_balances(
                     status_note=latest_snap.status_note,
                     captured_at=latest_snap.captured_at,
                     is_demo=False,
+                    billing_url=_billing,
+                    top_up_url=_billing,
+                    recharge_url=_billing,
+                    payment_url=_billing,
                 )
             )
         else:
@@ -680,11 +710,22 @@ def get_balances(
                     ),
                     captured_at=None,
                     is_demo=False,
+                    billing_url=_provider_billing_url(acc.provider_id, prov.docs_url if prov else None),
+                    top_up_url=_provider_billing_url(acc.provider_id, prov.docs_url if prov else None),
+                    recharge_url=_provider_billing_url(acc.provider_id, prov.docs_url if prov else None),
+                    payment_url=_provider_billing_url(acc.provider_id, prov.docs_url if prov else None),
                 )
             )
 
     if is_demo_mode_enabled(db):
-        results.extend(get_demo_balances(db, display_currency))
+        demo_balances = get_demo_balances(db, display_currency)
+        for b in demo_balances:
+            _url = _provider_billing_url(b.provider_id)
+            b.billing_url = _url
+            b.top_up_url = _url
+            b.recharge_url = _url
+            b.payment_url = _url
+        results.extend(demo_balances)
     return results
 
 

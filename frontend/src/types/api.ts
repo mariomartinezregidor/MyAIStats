@@ -6,6 +6,10 @@ export interface ProviderInfo {
   category_priority: number;
   api_base_url: string;
   docs_url: string;
+  billing_url?: string | null;
+  top_up_url?: string | null;
+  recharge_url?: string | null;
+  payment_url?: string | null;
   auth_instructions: string;
   supports_connection_test: boolean;
   supports_usage: boolean;
@@ -98,6 +102,10 @@ export interface BalanceItem {
   status_note: string | null;
   captured_at: string | null;
   is_demo: boolean;
+  billing_url?: string | null;
+  top_up_url?: string | null;
+  recharge_url?: string | null;
+  payment_url?: string | null;
 }
 
 export interface ModelPriceItem {

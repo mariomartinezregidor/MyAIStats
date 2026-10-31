@@ -134,6 +134,9 @@ export const en = {
     lowBalanceAlert: 'Low Balance Alert: Below threshold of',
     totalCredits: 'Total Credits:',
     usedCredits: 'Used Credits:',
+    recharge: 'Recharge credits',
+    rechargeNote:
+      'Direct in-app recharge is not supported by provider APIs. This button opens the provider\'s own billing/credits page (it may ask you to log in) so you can top up directly there.',
   },
 
   // Pricing

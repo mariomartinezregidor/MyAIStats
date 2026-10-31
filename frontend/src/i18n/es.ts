@@ -127,6 +127,9 @@ export const es = {
     lowBalanceAlert: 'Alerta de Saldo Bajo: Por debajo del umbral de',
     totalCredits: 'Créditos Totales:',
     usedCredits: 'Créditos Usados:',
+    recharge: 'Recargar créditos',
+    rechargeNote:
+      'La recarga directa en la app no está soportada por las APIs de los proveedores. Este botón abre la página de facturación/créditos del propio proveedor (puede pedirte login) para que recargues directamente allí.',
   },
 
   pricing: {
