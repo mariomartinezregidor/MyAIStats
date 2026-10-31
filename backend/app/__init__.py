@@ -1,0 +1,1 @@
+"""MyAIStats FastAPI Application."""
