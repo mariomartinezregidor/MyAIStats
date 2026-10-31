@@ -7,8 +7,11 @@ from connectors.fireworks import FireworksConnector
 from connectors.google import GoogleGeminiConnector
 from connectors.groq import GroqConnector
 from connectors.mistral import MistralConnector
+from connectors.morph import MorphConnector
 from connectors.openai import OpenAIConnector
+from connectors.opencode import OpenCodeConnector
 from connectors.openrouter import OpenRouterConnector
+from connectors.refuseless import RefuselessConnector
 from connectors.together import TogetherConnector
 
 CONNECTOR_REGISTRY: dict[str, BaseConnector] = {
@@ -21,6 +24,9 @@ CONNECTOR_REGISTRY: dict[str, BaseConnector] = {
     "groq": GroqConnector(),
     "mistral": MistralConnector(),
     "fireworks": FireworksConnector(),
+    "morph": MorphConnector(),
+    "refuseless": RefuselessConnector(),
+    "opencode": OpenCodeConnector(),
 }
 
 

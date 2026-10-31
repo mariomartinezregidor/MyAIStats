@@ -15,3 +15,6 @@ MyAIStats strictly queries **documented, official provider REST endpoints** over
 | **Groq** | P3 | Yes (`/openai/v1/models`) | **Unsupported** | **Unsupported** | **Unsupported** | Yes | Connection verification and model catalog via `/openai/v1/models`. |
 | **Mistral AI** | P3 | Yes (`/v1/models`) | **Unsupported** | **Unsupported** | **Unsupported** | Yes | Connection verification and model catalog via `/v1/models`. |
 | **Fireworks AI** | P3 | Yes (`/inference/v1/models`) | **Unsupported** | **Unsupported** | **Unsupported** | Yes | Connection verification and model catalog via `/inference/v1/models`. |
+| **Morph** | P3 | Yes (`/v1/models`) | **Unsupported** | **Unsupported** | **Unsupported** | Yes | OpenAI-compatible. Connection verification via `/v1/models` with `x-api-key` or Bearer. Model pricing catalog. |
+| **Refuseless** | P3 | Yes (`/v1/models`) | **Unsupported** | **Unsupported** | **Yes** (`/v1/credits`) | Yes | OpenAI-compatible. Confirmed credit balance via `/v1/credits`. Hosts abliterated open-weight models. |
+| **OpenCode** | P3 | Yes (`/inference/v1/models`) | **Unsupported** | **Unsupported** | **Unsupported** | Yes | OpenAI/Anthropic/Gemini-compatible inference. Connection verification via `/inference/v1/models`. Model pricing catalog. |

@@ -36,6 +36,9 @@ Capabilities are based on official documented APIs only. See [`docs/PROVIDER_CAP
 | Groq | P3 | ✅ | — | — | — | ✅ |
 | Mistral AI | P3 | ✅ | — | — | — | ✅ |
 | Fireworks AI | P3 | ✅ | — | — | — | ✅ |
+| Morph | P3 | ✅ | — | — | — | ✅ |
+| Refuseless | P3 | ✅ | — | — | ✅ | ✅ |
+| OpenCode | P3 | ✅ | — | — | — | ✅ |
 
 `—` means the provider does not expose that capability through the supported official public API. A provider failing never stops other accounts from synchronizing.
 

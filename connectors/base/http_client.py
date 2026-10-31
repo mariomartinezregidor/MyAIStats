@@ -15,6 +15,9 @@ APPROVED_PROVIDER_HOSTS: frozenset[str] = frozenset(
         "api.groq.com",
         "api.mistral.ai",
         "api.fireworks.ai",
+        "api.morphllm.com",
+        "api.refuseless.com",
+        "opencode.ai",
     }
 )
 

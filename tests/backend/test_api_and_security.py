@@ -25,7 +25,7 @@ def test_providers_and_demo_dashboard():
         providers_resp = client.get("/api/providers")
         assert providers_resp.status_code == 200
         providers = providers_resp.json()
-        assert len(providers) == 9
+        assert len(providers) == 12
         by_id = {p["id"]: p for p in providers}
         assert by_id["openai"]["supports_balance"] is False
         assert by_id["openai"]["requires_admin_key_for_usage"] is True
