@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nProvider } from '../i18n';
+import { AuthProvider } from '../auth/AuthContext';
 import { AppContent } from '../App';
 
 const mockSummary = {
@@ -74,9 +75,20 @@ const mockTimeline = {
 };
 
 beforeEach(() => {
+  localStorage.setItem('myaistats_token', 'test-token');
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => {
+      if (url.includes('/auth/me')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ id: 1, email: 'test@example.com', created_at: '2026-10-01T00:00:00Z' }),
+        };
+      }
+      if (url.includes('/auth/logout')) {
+        return { ok: true, status: 200, json: async () => ({ status: 'logged_out' }) };
+      }
       if (url.includes('/dashboard/summary')) {
         return { ok: true, status: 200, json: async () => mockSummary };
       }
@@ -196,7 +208,9 @@ describe('MyAIStats Dashboard UI', () => {
       <QueryClientProvider client={qc}>
         <I18nProvider>
           <MemoryRouter initialEntries={['/']}>
-            <AppContent />
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
           </MemoryRouter>
         </I18nProvider>
       </QueryClientProvider>
@@ -219,7 +233,9 @@ describe('MyAIStats Dashboard UI', () => {
       <QueryClientProvider client={qc}>
         <I18nProvider>
           <MemoryRouter initialEntries={['/balances']}>
-            <AppContent />
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
           </MemoryRouter>
         </I18nProvider>
       </QueryClientProvider>
@@ -239,7 +255,9 @@ describe('MyAIStats Dashboard UI', () => {
       <QueryClientProvider client={qc}>
         <I18nProvider>
           <MemoryRouter initialEntries={['/providers']}>
-            <AppContent />
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
           </MemoryRouter>
         </I18nProvider>
       </QueryClientProvider>
@@ -259,7 +277,9 @@ describe('MyAIStats Dashboard UI', () => {
       <QueryClientProvider client={qc}>
         <I18nProvider>
           <MemoryRouter initialEntries={['/settings']}>
-            <AppContent />
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
           </MemoryRouter>
         </I18nProvider>
       </QueryClientProvider>

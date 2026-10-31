@@ -267,3 +267,42 @@ class SettingsOut(BaseModel):
     eur_to_usd_rate: float
     exchange_rate_effective_date: str
     exchange_rate_source: str
+
+
+class AuthRegisterRequest(BaseModel):
+    email: str = Field(..., min_length=5, max_length=255, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    password: str = Field(..., min_length=8, max_length=128)
+    name: str | None = Field(default=None, max_length=120)
+
+
+class AuthLoginRequest(BaseModel):
+    email: str | None = Field(default=None, min_length=5, max_length=255)
+    username: str | None = Field(default=None, min_length=3, max_length=255)
+    password: str = Field(..., min_length=1, max_length=128)
+
+
+class AuthUserOut(BaseModel):
+    id: int
+    email: str
+    created_at: datetime
+    is_admin: bool = False
+
+
+class UserOut(BaseModel):
+    id: int
+    email: str
+    is_admin: bool = False
+    is_active: bool = True
+    created_at: datetime
+
+
+class UserUpdateRequest(BaseModel):
+    is_admin: bool | None = None
+    is_active: bool | None = None
+
+
+class AuthTokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_at: datetime
+    user: AuthUserOut

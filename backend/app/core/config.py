@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     default_currency: str = "USD"
     demo_mode: bool = True
 
+    # Authentication / bootstrap admin (production)
+    admin_email: str = ""
+    admin_password: str = ""
+    allow_registration: bool = True
+
     sync_usage_interval_minutes: int = 15
     sync_costs_interval_minutes: int = 30
     sync_balances_interval_minutes: int = 30

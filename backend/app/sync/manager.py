@@ -288,12 +288,17 @@ class SyncManager:
         finally:
             self._active_account_locks.discard(account_id)
 
-    async def sync_all_accounts(self, db: Session, scope: str = "full") -> list[SyncJob]:
+    async def sync_all_accounts(
+        self, db: Session, scope: str = "full", user_id: int | None = None
+    ) -> list[SyncJob]:
         """Synchronizes all connected accounts, isolating failures between providers/accounts."""
         if self._global_lock.locked():
             return []
         async with self._global_lock:
-            accounts = db.scalars(select(Account)).all()
+            stmt = select(Account)
+            if user_id is not None:
+                stmt = stmt.where(Account.user_id == user_id)
+            accounts = db.scalars(stmt).all()
             jobs: list[SyncJob] = []
             for acc in accounts:
                 try:

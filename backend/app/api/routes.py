@@ -5,11 +5,18 @@ import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
+from backend.app.core.auth import (
+    create_session,
+    get_current_user,
+    hash_password,
+    revoke_session,
+    verify_password,
+)
 from backend.app.core.config import settings
 from backend.app.core.security import vault
 from backend.app.database.session import get_db
@@ -25,11 +32,15 @@ from backend.app.models.entities import (
     Provider,
     SyncJob,
     UsageRecord,
+    User,
 )
 from backend.app.schemas.api_schemas import (
     AccountConnectRequest,
     AccountOut,
     AccountTestResponse,
+    AuthRegisterRequest,
+    AuthTokenOut,
+    AuthUserOut,
     BalanceItemOut,
     CostItemOut,
     CredentialRotateRequest,
@@ -46,6 +57,8 @@ from backend.app.schemas.api_schemas import (
     SyncStatusOut,
     TimelinePointOut,
     UsageItemOut,
+    UserOut,
+    UserUpdateRequest,
 )
 from backend.app.services.demo_service import (
     generate_demo_usage_and_costs,
@@ -64,6 +77,12 @@ from connectors.base.types import ConnectorCredentials
 from connectors.registry import get_connector
 
 router = APIRouter(prefix="/api")
+
+
+def get_admin_user(user: User = Depends(get_current_user)) -> User:
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    return user
 
 PROVIDER_BILLING_URLS: dict[str, str] = {
     "openai": "https://platform.openai.com/settings/organization/billing",
@@ -138,6 +157,162 @@ def _resolve_date_range(
     return s_dt, e_dt
 
 
+@router.post("/register", response_model=AuthTokenOut, status_code=201, tags=["Auth"], include_in_schema=False)
+@router.post("/signup", response_model=AuthTokenOut, status_code=201, tags=["Auth"], include_in_schema=False)
+@router.post("/auth/signup", response_model=AuthTokenOut, status_code=201, tags=["Auth"], include_in_schema=False)
+@router.post("/auth/register", response_model=AuthTokenOut, status_code=201, tags=["Auth"])
+def register_user(
+    payload: AuthRegisterRequest,
+    db: Session = Depends(get_db),
+) -> AuthTokenOut:
+    if not settings.allow_registration:
+        raise HTTPException(status_code=403, detail="Registration is disabled")
+    email = payload.email.strip().lower()
+    existing = db.scalar(select(User).where(User.email == email))
+    if existing:
+        raise HTTPException(status_code=409, detail="Email already registered")
+    user = User(email=email, password_hash=hash_password(payload.password))
+    # The first registered user becomes an admin when no admin exists yet.
+    admin_count = db.scalar(select(func.count(User.id)).where(User.is_admin.is_(True)))
+    if (admin_count or 0) == 0:
+        user.is_admin = True
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    token, session = create_session(db, user)
+    return AuthTokenOut(
+        access_token=token,
+        token_type="bearer",
+        expires_at=session.expires_at,
+        user=AuthUserOut(id=user.id, email=user.email, created_at=user.created_at, is_admin=user.is_admin),
+    )
+
+
+@router.post("/login", response_model=AuthTokenOut, tags=["Auth"], include_in_schema=False)
+@router.post("/token", response_model=AuthTokenOut, tags=["Auth"], include_in_schema=False)
+@router.post("/auth/token", response_model=AuthTokenOut, tags=["Auth"], include_in_schema=False)
+@router.post("/signin", response_model=AuthTokenOut, tags=["Auth"], include_in_schema=False)
+@router.post("/auth/login", response_model=AuthTokenOut, tags=["Auth"])
+async def login_user(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> AuthTokenOut:
+    content_type = request.headers.get("content-type", "")
+    if "application/json" in content_type:
+        data = await request.json()
+    else:
+        form = await request.form()
+        data = dict(form)
+    email = str(data.get("email") or data.get("username") or "").strip().lower()
+    password = str(data.get("password") or "")
+    user = db.scalar(select(User).where(User.email == email))
+    if not user or not verify_password(password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="User is disabled")
+    token, session = create_session(db, user)
+    return AuthTokenOut(
+        access_token=token,
+        token_type="bearer",
+        expires_at=session.expires_at,
+        user=AuthUserOut(id=user.id, email=user.email, created_at=user.created_at, is_admin=user.is_admin),
+    )
+
+
+@router.get("/me", response_model=AuthUserOut, tags=["Auth"], include_in_schema=False)
+@router.get("/user", response_model=AuthUserOut, tags=["Auth"], include_in_schema=False)
+@router.get("/auth/me", response_model=AuthUserOut, tags=["Auth"])
+@router.get("/users/me", response_model=AuthUserOut, tags=["Auth"], include_in_schema=False)
+def auth_me(user: User = Depends(get_current_user)) -> AuthUserOut:
+    return AuthUserOut(id=user.id, email=user.email, created_at=user.created_at, is_admin=user.is_admin)
+
+
+@router.post("/auth/logout", tags=["Auth"])
+def auth_logout(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> dict[str, str]:
+    auth = request.headers.get("Authorization", "")
+    token = auth.split(" ", 1)[1].strip() if auth.lower().startswith("bearer ") else ""
+    if token:
+        revoke_session(db, token)
+    return {"status": "logged_out"}
+
+
+@router.get("/users", response_model=list[UserOut], tags=["Users"])
+def list_users(
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_admin_user),
+) -> list[UserOut]:
+    users = db.scalars(select(User).order_by(User.created_at)).all()
+    return [
+        UserOut(
+            id=u.id,
+            email=u.email,
+            is_admin=u.is_admin,
+            is_active=u.is_active,
+            created_at=u.created_at,
+        )
+        for u in users
+    ]
+
+
+@router.put("/users/{user_id}", response_model=UserOut, tags=["Users"])
+def update_user(
+    user_id: int,
+    payload: UserUpdateRequest,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_admin_user),
+) -> UserOut:
+    target = db.get(User, user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if payload.is_admin is not None:
+        # Prevent removing the last active admin.
+        if target.is_admin and not payload.is_admin:
+            admin_count = db.scalar(
+                select(func.count(User.id)).where(User.is_admin.is_(True), User.is_active.is_(True))
+            )
+            if (admin_count or 0) <= 1:
+                raise HTTPException(status_code=400, detail="Cannot remove the last admin")
+        target.is_admin = payload.is_admin
+    if payload.is_active is not None:
+        if target.id == admin.id and not payload.is_active:
+            raise HTTPException(status_code=400, detail="Cannot disable your own account")
+        target.is_active = payload.is_active
+    db.commit()
+    db.refresh(target)
+    return UserOut(
+        id=target.id,
+        email=target.email,
+        is_admin=target.is_admin,
+        is_active=target.is_active,
+        created_at=target.created_at,
+    )
+
+
+@router.delete("/users/{user_id}", status_code=204, tags=["Users"])
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_admin_user),
+) -> Response:
+    if user_id == admin.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    target = db.get(User, user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if target.is_admin:
+        admin_count = db.scalar(
+            select(func.count(User.id)).where(User.is_admin.is_(True))
+        )
+        if (admin_count or 0) <= 1:
+            raise HTTPException(status_code=400, detail="Cannot delete the last admin")
+    db.delete(target)
+    db.commit()
+    return Response(status_code=204)
+
+
 @router.get("/providers", response_model=list[ProviderOut], tags=["Providers"])
 def list_providers(db: Session = Depends(get_db)) -> list[ProviderOut]:
     providers = db.scalars(
@@ -173,12 +348,11 @@ def list_providers(db: Session = Depends(get_db)) -> list[ProviderOut]:
     ]
 
 
-@router.get("/accounts", response_model=list[AccountOut], tags=["Accounts"])
-def list_accounts(
-    include_demo: bool = Query(default=True),
-    db: Session = Depends(get_db),
-) -> list[AccountOut]:
-    accounts = db.scalars(select(Account).order_by(Account.created_at.desc())).all()
+def _list_accounts(db: Session, user_id: int | None, include_demo: bool = True) -> list[AccountOut]:
+    stmt = select(Account).order_by(Account.created_at.desc())
+    if user_id is not None:
+        stmt = stmt.where(Account.user_id == user_id)
+    accounts = db.scalars(stmt).all()
     provider_map = {p.id: p.name for p in db.scalars(select(Provider)).all()}
     result: list[AccountOut] = []
     for acc in accounts:
@@ -205,10 +379,20 @@ def list_accounts(
     return result
 
 
+@router.get("/accounts", response_model=list[AccountOut], tags=["Accounts"])
+def list_accounts(
+    include_demo: bool = Query(default=True),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> list[AccountOut]:
+    return _list_accounts(db, user.id, include_demo)
+
+
 @router.post("/accounts/connect", response_model=AccountOut, status_code=201, tags=["Accounts"])
 async def connect_account(
     payload: AccountConnectRequest,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ) -> AccountOut:
     provider = db.get(Provider, payload.provider_id.lower())
     if not provider:
@@ -240,6 +424,7 @@ async def connect_account(
     masked = vault.mask_key(payload.api_key)
 
     account = Account(
+        user_id=user.id,
         provider_id=provider.id,
         name=payload.name.strip(),
         external_org_id=payload.organization_id.strip() if payload.organization_id else None,
@@ -286,9 +471,10 @@ async def rotate_account_credentials(
     account_id: int,
     payload: CredentialRotateRequest,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ) -> AccountOut:
     account = db.get(Account, account_id)
-    if not account or not account.credential:
+    if not account or not account.credential or account.user_id != user.id:
         raise HTTPException(status_code=404, detail="Account not found")
 
     account.credential.encrypted_api_key = vault.encrypt(payload.api_key.strip())
@@ -326,6 +512,7 @@ async def rotate_account_credentials(
 async def test_account_connection(
     account_id: int,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ) -> AccountTestResponse:
     if account_id < 0:
         return AccountTestResponse(
@@ -339,7 +526,7 @@ async def test_account_connection(
         )
 
     account = db.get(Account, account_id)
-    if not account or not account.credential:
+    if not account or not account.credential or account.user_id != user.id:
         raise HTTPException(status_code=404, detail="Account not found")
 
     connector = get_connector(account.provider_id)
@@ -390,6 +577,7 @@ async def sync_account_endpoint(
     account_id: int,
     scope: str = Query(default="full"),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ) -> SyncJobOut:
     if account_id < 0:
         now = datetime.now(UTC)
@@ -407,7 +595,7 @@ async def sync_account_endpoint(
         )
 
     account = db.get(Account, account_id)
-    if not account:
+    if not account or account.user_id != user.id:
         raise HTTPException(status_code=404, detail="Account not found")
 
     job = await sync_manager.sync_account(db, account_id, scope=scope)
@@ -418,9 +606,10 @@ async def sync_account_endpoint(
 def delete_account(
     account_id: int,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ) -> Response:
     account = db.get(Account, account_id)
-    if not account:
+    if not account or account.user_id != user.id:
         raise HTTPException(status_code=404, detail="Account not found")
     db.delete(account)
     db.commit()
@@ -435,6 +624,7 @@ def _collect_usage_items(
     account_id: int | None,
     model_id: str | None,
     display_currency: str,
+    user_id: int | None = None,
 ) -> tuple[list[UsageItemOut], bool]:
     provider_map = {p.id: p.name for p in db.scalars(select(Provider)).all()}
     account_map = {a.id: a.name for a in db.scalars(select(Account)).all()}
@@ -449,9 +639,20 @@ def _collect_usage_items(
         stmt = stmt.where(UsageRecord.account_id == account_id)
     if model_id:
         stmt = stmt.where(UsageRecord.model_id == model_id)
-    stmt = stmt.order_by(UsageRecord.timestamp.desc())
-
-    rows = db.scalars(stmt).all() if (account_id is None or account_id > 0) else []
+    if user_id is not None:
+        allowed_ids = [
+            a.id for a in db.scalars(select(Account).where(Account.user_id == user_id)).all()
+        ]
+        if not allowed_ids:
+            rows = []
+            stmt = None
+        else:
+            stmt = stmt.where(UsageRecord.account_id.in_(allowed_ids))
+    if stmt is not None:
+        stmt = stmt.order_by(UsageRecord.timestamp.desc())
+        rows = db.scalars(stmt).all() if (account_id is None or account_id > 0) else []
+    else:
+        rows = []
     items: list[UsageItemOut] = []
     for r in rows:
         conv_act, _, _ = convert_amount(db, r.actual_cost, r.currency, display_currency)
@@ -513,11 +714,12 @@ def get_usage(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=500),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ) -> PaginatedUsageOut:
     display_currency = (currency or get_default_currency(db)).upper()
     start_dt, end_dt = _resolve_date_range(preset, start_date, end_date)
     items, demo_active = _collect_usage_items(
-        db, start_dt, end_dt, provider_id, account_id, model_id, display_currency
+        db, start_dt, end_dt, provider_id, account_id, model_id, display_currency, user_id=user.id
     )
     total = len(items)
     offset = (page - 1) * page_size
@@ -538,6 +740,7 @@ def _collect_cost_items(
     account_id: int | None,
     cost_type: str | None,
     display_currency: str,
+    user_id: int | None = None,
 ) -> tuple[list[CostItemOut], bool]:
     provider_map = {p.id: p.name for p in db.scalars(select(Provider)).all()}
     account_map = {a.id: a.name for a in db.scalars(select(Account)).all()}
@@ -552,9 +755,20 @@ def _collect_cost_items(
         stmt = stmt.where(CostRecord.account_id == account_id)
     if cost_type in ("actual", "estimated"):
         stmt = stmt.where(CostRecord.cost_type == cost_type)
-    stmt = stmt.order_by(CostRecord.period_start.desc())
-
-    rows = db.scalars(stmt).all() if (account_id is None or account_id > 0) else []
+    if user_id is not None:
+        allowed_ids = [
+            a.id for a in db.scalars(select(Account).where(Account.user_id == user_id)).all()
+        ]
+        if not allowed_ids:
+            rows = []
+            stmt = None
+        else:
+            stmt = stmt.where(CostRecord.account_id.in_(allowed_ids))
+    if stmt is not None:
+        stmt = stmt.order_by(CostRecord.period_start.desc())
+        rows = db.scalars(stmt).all() if (account_id is None or account_id > 0) else []
+    else:
+        rows = []
     items: list[CostItemOut] = []
     for r in rows:
         conv_amt, fx_rate, fx_date = convert_amount(db, r.amount, r.currency, display_currency)
@@ -608,11 +822,12 @@ def get_costs(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=500),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ) -> PaginatedCostsOut:
     display_currency = (currency or get_default_currency(db)).upper()
     start_dt, end_dt = _resolve_date_range(preset, start_date, end_date)
     items, demo_active = _collect_cost_items(
-        db, start_dt, end_dt, provider_id, account_id, cost_type, display_currency
+        db, start_dt, end_dt, provider_id, account_id, cost_type, display_currency, user_id=user.id
     )
     actual_total = round(
         sum(i.converted_amount for i in items if i.cost_type == "actual"), 4
@@ -638,9 +853,15 @@ def get_costs(
 def get_balances(
     currency: str | None = Query(default=None),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    user_id: int | None = None,
 ) -> list[BalanceItemOut]:
     display_currency = (currency or get_default_currency(db)).upper()
-    accounts = db.scalars(select(Account).order_by(Account.id)).all()
+    effective_user_id = user_id if user_id is not None else (user.id if user is not None else None)
+    stmt = select(Account).order_by(Account.id)
+    if effective_user_id is not None:
+        stmt = stmt.where(Account.user_id == effective_user_id)
+    accounts = db.scalars(stmt).all()
     provider_map = {p.id: p for p in db.scalars(select(Provider)).all()}
     results: list[BalanceItemOut] = []
 
@@ -783,16 +1004,17 @@ def get_dashboard_summary(
     provider_id: str | None = Query(default=None),
     currency: str | None = Query(default=None),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ) -> DashboardSummaryOut:
     display_currency = (currency or get_default_currency(db)).upper()
     start_dt, end_dt = _resolve_date_range(preset, start_date, end_date)
     usage_items, demo_active = _collect_usage_items(
-        db, start_dt, end_dt, provider_id, None, None, display_currency
+        db, start_dt, end_dt, provider_id, None, None, display_currency, user_id=user.id
     )
     cost_items, _ = _collect_cost_items(
-        db, start_dt, end_dt, provider_id, None, None, display_currency
+        db, start_dt, end_dt, provider_id, None, None, display_currency, user_id=user.id
     )
-    balances = get_balances(currency=display_currency, db=db)
+    balances = get_balances(currency=display_currency, db=db, user_id=user.id)
     if provider_id:
         balances = [b for b in balances if b.provider_id == provider_id]
 
@@ -872,7 +1094,7 @@ def get_dashboard_summary(
         entry["cached_input_tokens"] += u.cached_input_tokens
         entry["total_tokens"] += u.total_tokens
 
-    all_accounts = list_accounts(include_demo=demo_active, db=db)
+    all_accounts = _list_accounts(db, user.id if user is not None else None, include_demo=demo_active)
     fx_rate, fx_date, fx_source = get_exchange_rate(db, "USD", display_currency)
 
     return DashboardSummaryOut(
@@ -910,16 +1132,17 @@ def get_dashboard_timeline(
     provider_id: str | None = Query(default=None),
     currency: str | None = Query(default=None),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ) -> DashboardTimelineOut:
     display_currency = (currency or get_default_currency(db)).upper()
     start_dt, end_dt = _resolve_date_range(preset, start_date, end_date)
     usage_items, _ = _collect_usage_items(
-        db, start_dt, end_dt, provider_id, None, None, display_currency
+        db, start_dt, end_dt, provider_id, None, None, display_currency, user_id=user.id
     )
     cost_items, _ = _collect_cost_items(
-        db, start_dt, end_dt, provider_id, None, None, display_currency
+        db, start_dt, end_dt, provider_id, None, None, display_currency, user_id=user.id
     )
-    balances = get_balances(currency=display_currency, db=db)
+    balances = get_balances(currency=display_currency, db=db, user_id=user.id)
     base_balance = sum(
         b.converted_available_balance or 0.0
         for b in balances
@@ -1031,10 +1254,17 @@ def _serialize_sync_job(job: SyncJob) -> SyncJobOut:
 
 
 @router.get("/sync/status", response_model=SyncStatusOut, tags=["Synchronization"])
-def get_sync_status(db: Session = Depends(get_db)) -> SyncStatusOut:
+def get_sync_status(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> SyncStatusOut:
+    user_account_ids = {
+        a.id for a in db.scalars(select(Account).where(Account.user_id == user.id)).all()
+    }
     jobs = db.scalars(
-        select(SyncJob).order_by(desc(SyncJob.started_at)).limit(20)
+        select(SyncJob).order_by(desc(SyncJob.started_at)).limit(100)
     ).all()
+    jobs = [j for j in jobs if j.account_id is None or j.account_id in user_account_ids][:20]
     recent_out = [_serialize_sync_job(j) for j in jobs]
     last_sync = jobs[0].finished_at or jobs[0].started_at if jobs else None
 
@@ -1083,13 +1313,17 @@ def get_sync_status(db: Session = Depends(get_db)) -> SyncStatusOut:
 async def trigger_global_sync(
     scope: str = Query(default="full"),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ) -> list[SyncJobOut]:
-    jobs = await sync_manager.sync_all_accounts(db, scope=scope)
+    jobs = await sync_manager.sync_all_accounts(db, scope=scope, user_id=user.id)
     return [_serialize_sync_job(j) for j in jobs]
 
 
 @router.get("/settings", response_model=SettingsOut, tags=["Settings"])
-def get_settings_endpoint(db: Session = Depends(get_db)) -> SettingsOut:
+def get_settings_endpoint(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> SettingsOut:
     usd_eur, eff_date, source = get_exchange_rate(db, "USD", "EUR")
     eur_usd, _, _ = get_exchange_rate(db, "EUR", "USD")
     return SettingsOut(
@@ -1114,6 +1348,7 @@ def get_settings_endpoint(db: Session = Depends(get_db)) -> SettingsOut:
 def update_settings_endpoint(
     payload: SettingsUpdateRequest,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ) -> SettingsOut:
     updates = {
         "default_currency": payload.default_currency.upper(),
@@ -1184,6 +1419,7 @@ def export_data(
     dataset: str = Query(default="usage", pattern="^(usage|costs|balances)$"),
     preset: str | None = Query(default="30d"),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ) -> Response:
     fmt_clean = fmt.lower()
     if fmt_clean not in ("csv", "json"):
@@ -1193,13 +1429,13 @@ def export_data(
     start_dt, end_dt = _resolve_date_range(preset, None, None)
 
     if dataset == "usage":
-        items, _ = _collect_usage_items(db, start_dt, end_dt, None, None, None, display_currency)
+        items, _ = _collect_usage_items(db, start_dt, end_dt, None, None, None, display_currency, user_id=user.id)
         rows = [item.model_dump(mode="json") for item in items]
     elif dataset == "costs":
-        items, _ = _collect_cost_items(db, start_dt, end_dt, None, None, None, display_currency)
+        items, _ = _collect_cost_items(db, start_dt, end_dt, None, None, None, display_currency, user_id=user.id)
         rows = [item.model_dump(mode="json") for item in items]
     else:
-        items = get_balances(currency=display_currency, db=db)
+        items = get_balances(currency=display_currency, db=db, user_id=user.id)
         rows = [item.model_dump(mode="json") for item in items]
 
     filename = f"myaistats_{dataset}_{datetime.now(UTC).strftime('%Y%m%d')}.{fmt_clean}"
@@ -1230,7 +1466,9 @@ def _sqlite_file_path() -> Path:
 
 
 @router.get("/backup", tags=["Exports & Backups"])
-def download_database_backup() -> FileResponse:
+def download_database_backup(
+    user: User = Depends(get_current_user),
+) -> FileResponse:
     db_path = _sqlite_file_path()
     if not db_path.exists():
         raise HTTPException(status_code=404, detail="SQLite database file not found.")
@@ -1247,7 +1485,10 @@ def download_database_backup() -> FileResponse:
 
 
 @router.post("/restore", tags=["Exports & Backups"])
-async def restore_database_backup(file: UploadFile = File(...)) -> dict:
+async def restore_database_backup(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+) -> dict:
     db_path = _sqlite_file_path()
     content = await file.read()
     if len(content) < 16 or not content.startswith(b"SQLite format 3\x00"):

@@ -136,7 +136,7 @@ export const en = {
     usedCredits: 'Used Credits:',
     recharge: 'Recharge credits',
     rechargeNote:
-      'Direct in-app recharge is not supported by provider APIs. This button opens the provider\'s own billing/credits page (it may ask you to log in) so you can top up directly there.',
+      "Direct in-app recharge is not supported by provider APIs. This button opens the provider's own billing/credits page (it may ask you to log in) so you can top up directly there.",
   },
 
   // Pricing

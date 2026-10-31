@@ -11,10 +11,12 @@ import {
   Server,
   Settings,
   ShieldCheck,
+  Users,
   Sparkles,
   Wallet,
 } from 'lucide-react';
 import { api } from '../api/client';
+import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n';
 import { FilterBar } from './FilterBar';
 import type { DatePreset } from '../types/api';
@@ -39,6 +41,7 @@ const NAV_ITEMS_FACTORY = (t: ReturnType<typeof useI18n>['t']) => [
   { to: '/pricing', label: t.nav.pricing, icon: Cpu },
   { to: '/history', label: t.nav.history, icon: Clock },
   { to: '/settings', label: t.nav.settings, icon: Settings },
+  { to: '/users', label: 'Users', icon: Users },
 ];
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -54,6 +57,7 @@ export const Layout: React.FC<LayoutProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const { t, lang, setLang } = useI18n();
+  const { user, logout } = useAuth();
 
   const { data: syncStatus } = useQuery({
     queryKey: ['syncStatus'],
@@ -94,7 +98,9 @@ export const Layout: React.FC<LayoutProps> = ({
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {NAV_ITEMS_FACTORY(t).map(({ to, label, icon: Icon }) => (
+          {NAV_ITEMS_FACTORY(t)
+            .filter(({ to }) => to !== '/users' || !!user?.is_admin)
+            .map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -150,6 +156,22 @@ export const Layout: React.FC<LayoutProps> = ({
               ? t.synchronizing
               : t.syncAllAccounts}
           </button>
+
+          {user && (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-[#1f2433] bg-[#11131c] px-3 py-2 text-xs text-slate-300">
+              <span className="truncate">{user.email}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  logout();
+                  queryClient.clear();
+                }}
+                className="shrink-0 font-semibold text-red-300 hover:text-red-200"
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 

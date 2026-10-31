@@ -22,7 +22,15 @@ def test_providers_and_demo_dashboard():
         assert health.status_code == 200
         assert health.json()["status"] == "ok"
 
-        providers_resp = client.get("/api/providers")
+        reg = client.post(
+            "/api/auth/register",
+            json={"email": "demo@example.com", "password": "password123"},
+        )
+        assert reg.status_code == 201
+        token = reg.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        providers_resp = client.get("/api/providers", headers=headers)
         assert providers_resp.status_code == 200
         providers = providers_resp.json()
         assert len(providers) == 12
@@ -33,7 +41,7 @@ def test_providers_and_demo_dashboard():
         assert by_id["deepseek"]["supports_balance"] is True
         assert by_id["google"]["supports_balance"] is False
 
-        summary_resp = client.get("/api/dashboard/summary?preset=30d&currency=USD")
+        summary_resp = client.get("/api/dashboard/summary?preset=30d&currency=USD", headers=headers)
         assert summary_resp.status_code == 200
         summary = summary_resp.json()
         assert summary["demo_mode_active"] is True
@@ -48,7 +56,7 @@ def test_providers_and_demo_dashboard():
         assert summary["output_tokens"] > 0
 
         # Test currency conversion to EUR
-        summary_eur = client.get("/api/dashboard/summary?preset=30d&currency=EUR").json()
+        summary_eur = client.get("/api/dashboard/summary?preset=30d&currency=EUR", headers=headers).json()
         assert summary_eur["display_currency"] == "EUR"
         assert summary_eur["total_combined_spending"] < summary["total_combined_spending"]
 
@@ -102,9 +110,18 @@ def test_account_connect_sync_and_no_key_leak():
     )
 
     with TestClient(app) as client:
+        reg = client.post(
+            "/api/auth/register",
+            json={"email": "tester@example.com", "password": "password123"},
+        )
+        assert reg.status_code == 201
+        token = reg.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
         raw_key = "sk-or-v1-secret-test-credential-1234"
         connect_resp = client.post(
             "/api/accounts/connect",
+            headers=headers,
             json={
                 "provider_id": "openrouter",
                 "name": "Test OpenRouter Account",
@@ -120,28 +137,28 @@ def test_account_connect_sync_and_no_key_leak():
         assert acc["status"] == "connected"
 
         # Test manual sync
-        sync_resp = client.post(f"/api/accounts/{acc_id}/sync")
+        sync_resp = client.post(f"/api/accounts/{acc_id}/sync", headers=headers)
         assert sync_resp.status_code == 200
         job = sync_resp.json()
         assert job["status"] == "completed"
         assert job["records_synced"] >= 2
 
         # Verify balances endpoint includes confirmed 87.50 balance
-        balances = client.get("/api/balances").json()
+        balances = client.get("/api/balances", headers=headers).json()
         matching = [b for b in balances if b["account_id"] == acc_id]
         assert len(matching) == 1
         assert matching[0]["available_balance"] == 87.5
         assert matching[0]["is_supported"] is True
 
         # Verify CSV & JSON exports
-        csv_resp = client.get("/api/export/csv?dataset=usage")
+        csv_resp = client.get("/api/export/csv?dataset=usage", headers=headers)
         assert csv_resp.status_code == 200
         assert "text/csv" in csv_resp.headers["content-type"]
 
-        json_resp = client.get("/api/export/json?dataset=balances")
+        json_resp = client.get("/api/export/json?dataset=balances", headers=headers)
         assert json_resp.status_code == 200
         assert "application/json" in json_resp.headers["content-type"]
 
         # Clean up test account
-        del_resp = client.delete(f"/api/accounts/{acc_id}")
+        del_resp = client.delete(f"/api/accounts/{acc_id}", headers=headers)
         assert del_resp.status_code == 204

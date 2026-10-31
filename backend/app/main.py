@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.api.routes import router as api_router
+from backend.app.core.auth import bootstrap_admin
 from backend.app.core.config import settings
 from backend.app.database.session import Base, SessionLocal, engine
 from backend.app.services.seed_service import seed_initial_pricing, seed_reference_data
@@ -16,6 +17,7 @@ async def lifespan(app: FastAPI):
     with SessionLocal() as db:
         seed_reference_data(db)
         await seed_initial_pricing(db)
+    bootstrap_admin()
     sync_manager.start_background_loop()
     yield
     await sync_manager.stop_background_loop()

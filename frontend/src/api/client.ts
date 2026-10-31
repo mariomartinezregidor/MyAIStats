@@ -14,13 +14,24 @@ import type {
 
 const BASE_URL = '/api';
 
+function getStoredToken(): string | null {
+  try {
+    return localStorage.getItem('myaistats_token');
+  } catch {
+    return null;
+  }
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = getStoredToken();
+  const { headers: extraHeaders, ...rest } = options ?? {};
   const res = await fetch(`${BASE_URL}${path}`, {
+    ...rest,
     headers: {
       'Content-Type': 'application/json',
-      ...(options?.headers || {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...((extraHeaders as Record<string, string>) || {}),
     },
-    ...options,
   });
   if (!res.ok) {
     let errText = `HTTP ${res.status}`;
@@ -179,6 +190,29 @@ export const api = {
   runGlobalSync: (scope = 'full') =>
     request<SyncJob[]>(`/sync/run?scope=${scope}`, { method: 'POST' }),
   getSettings: () => request<AppSettings>('/settings'),
+  login: (email: string, password: string) =>
+    request<{ access_token: string; token_type: string; expires_at: string; user: { id: number; email: string; created_at: string } }>(
+      '/auth/login',
+      { method: 'POST', body: JSON.stringify({ email, password }) }
+    ),
+  register: (email: string, password: string) =>
+    request<{ access_token: string; token_type: string; expires_at: string; user: { id: number; email: string; created_at: string } }>(
+      '/auth/register',
+      { method: 'POST', body: JSON.stringify({ email, password }) }
+    ),
+  me: () =>
+    request<{ id: number; email: string; created_at: string }>('/auth/me'),
+  logout: () =>
+    request<{ status: string }>('/auth/logout', { method: 'POST' }),
+  getUsers: () =>
+    request<Array<{ id: number; email: string; is_admin: boolean; is_active: boolean; created_at: string }>>('/users'),
+  updateUser: (userId: number, payload: { is_admin?: boolean; is_active?: boolean }) =>
+    request<{ id: number; email: string; is_admin: boolean; is_active: boolean; created_at: string }>(
+      `/users/${userId}`,
+      { method: 'PUT', body: JSON.stringify(payload) }
+    ),
+  deleteUser: (userId: number) =>
+    request<void>(`/users/${userId}`, { method: 'DELETE' }),
   updateSettings: (payload: {
     default_currency: 'USD' | 'EUR';
     demo_mode: boolean;
