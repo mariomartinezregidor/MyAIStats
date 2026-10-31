@@ -3,7 +3,7 @@
 **All your AI usage. One dashboard.**
 
 [![CI](https://github.com/YOUR_USERNAME/my-ai-stats/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/my-ai-stats/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-v0.1.0-blue.svg)](https://github.com/YOUR_USERNAME/my-ai-stats/releases/tag/v0.1.0)
+[![Version](https://img.shields.io/badge/version-v0.2.3-blue.svg)](https://github.com/mariomartinezregidor/MyAIStats/releases/tag/v0.2.3)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Local-first](https://img.shields.io/badge/privacy-local--first-purple.svg)](docs/SECURITY.md)
 

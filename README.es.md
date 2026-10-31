@@ -1,15 +1,15 @@
-# MyAIStats (v0.2.0)
+# MyAIStats (v0.2.3)
 
 **All your AI usage. One dashboard.**
 
 [![CI](https://github.com/mariomartinezregidor/MyAIStats/actions/workflows/ci.yml/badge.svg)](https://github.com/mariomartinezregidor/MyAIStats/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-v0.2.1-blue.svg)](https://github.com/mariomartinezregidor/MyAIStats/releases/tag/v0.2.1)
+[![Version](https://img.shields.io/badge/version-v0.2.3-blue.svg)](https://github.com/mariomartinezregidor/MyAIStats/releases/tag/v0.2.3)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Local-first](https://img.shields.io/badge/privacy-local--first-purple.svg)](docs/SECURITY.md)
 
 MyAIStats es una aplicación open-source y local-first para centralizar el uso de APIs de IA, tokens, costes, créditos, saldos y precios de modelos desde un único panel privado. Se ejecuta en tu máquina, no requiere registro y mantiene las credenciales y el historial local.
 
-> **v0.2.1** — añade soporte de idioma español (i18n) y README en español.
+> **v0.2.3** — añade enlace de recarga/recarga de créditos por proveedor en la sección de Créditos y Saldos.
 
 [English version](README.md)
 
