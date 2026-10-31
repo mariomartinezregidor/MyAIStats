@@ -1,6 +1,6 @@
 [project]
 name = "my-ai-stats"
-version = "0.2.2"
+version = "0.2.3"
 description = "All your AI usage. One dashboard. Local-first AI usage, cost, balance, and model pricing tracker."
 readme = "README.md"
 requires-python = ">=3.11"
