@@ -18,6 +18,7 @@ class ConnectorCredentials(BaseModel):
     api_key: str
     extra_secret: str | None = None
     organization_id: str | None = None
+    workspace_id: str | None = None
 
 
 class ConnectionTestResult(BaseModel):

@@ -194,6 +194,7 @@ async def connect_account(
         api_key=payload.api_key,
         extra_secret=payload.extra_secret,
         organization_id=payload.organization_id,
+        workspace_id=payload.workspace_id,
     )
     try:
         test_res = await connector.test_connection(creds_dto)
@@ -217,6 +218,7 @@ async def connect_account(
         provider_id=provider.id,
         name=payload.name.strip(),
         external_org_id=payload.organization_id.strip() if payload.organization_id else None,
+        external_workspace_id=payload.workspace_id.strip() if payload.workspace_id else None,
         status=status_val,
         status_message=status_msg,
         is_admin_key=is_admin,
@@ -242,6 +244,7 @@ async def connect_account(
         provider_name=provider.name,
         name=account.name,
         external_org_id=account.external_org_id,
+        external_workspace_id=account.external_workspace_id,
         status=account.status,
         status_message=account.status_message,
         is_admin_key=account.is_admin_key,
@@ -270,6 +273,8 @@ async def rotate_account_credentials(
     account.credential.masked_hint = vault.mask_key(payload.api_key)
     if payload.organization_id is not None:
         account.external_org_id = payload.organization_id.strip() or None
+    if payload.workspace_id is not None:
+        account.external_workspace_id = payload.workspace_id.strip() or None
 
     db.commit()
     db.refresh(account)
@@ -280,6 +285,7 @@ async def rotate_account_credentials(
         provider_name=provider.name if provider else account.provider_id,
         name=account.name,
         external_org_id=account.external_org_id,
+        external_workspace_id=account.external_workspace_id,
         status=account.status,
         status_message="Credentials rotated successfully.",
         is_admin_key=account.is_admin_key,
@@ -322,6 +328,7 @@ async def test_account_connection(
         api_key=decrypted_key,
         extra_secret=decrypted_extra,
         organization_id=account.external_org_id,
+        workspace_id=account.external_workspace_id,
     )
     try:
         res = await connector.test_connection(creds)

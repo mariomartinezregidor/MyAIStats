@@ -75,18 +75,23 @@ class AnthropicConnector(BaseConnector):
             ),
         )
 
-    def _headers(self, creds: ConnectorCredentials) -> dict[str, str]:
-        return {
+    def _headers(self, creds: ConnectorCredentials, *, admin: bool = False) -> dict[str, str]:
+        headers = {
             "x-api-key": creds.api_key.strip(),
             "anthropic-version": "2023-06-01",
         }
+        # Non-admin endpoints (e.g. /v1/models) scoped to a service account key
+        # require the anthropic-workspace-id header.
+        if not admin and creds.workspace_id:
+            headers["anthropic-workspace-id"] = creds.workspace_id.strip()
+        return headers
 
     async def test_connection(self, creds: ConnectorCredentials) -> ConnectionTestResult:
         is_admin = creds.api_key.strip().startswith("sk-ant-admin")
         resp = await self.http.request(
             "GET",
             f"{self.api_base_url}/v1/models",
-            headers=self._headers(creds),
+            headers=self._headers(creds, admin=False),
         )
         if resp.status_code == 200:
             data = resp.json().get("data", [])
@@ -123,7 +128,7 @@ class AnthropicConnector(BaseConnector):
         resp = await self.http.request(
             "GET",
             f"{self.api_base_url}/v1/organizations/usage_report/messages",
-            headers=self._headers(creds),
+            headers=self._headers(creds, admin=True),
             params=params,
         )
         records: list[NormalizedUsageRecord] = []
@@ -178,7 +183,7 @@ class AnthropicConnector(BaseConnector):
         resp = await self.http.request(
             "GET",
             f"{self.api_base_url}/v1/organizations/cost_report",
-            headers=self._headers(creds),
+            headers=self._headers(creds, admin=True),
             params=params,
         )
         records: list[NormalizedCostRecord] = []

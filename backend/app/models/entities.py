@@ -56,6 +56,7 @@ class Account(Base):
     )
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     external_org_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    external_workspace_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
     status: Mapped[str] = mapped_column(String(32), default="unverified")  # connected, error, unverified
     status_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_admin_key: Mapped[bool] = mapped_column(Boolean, default=False)

@@ -27,6 +27,7 @@ class AccountConnectRequest(BaseModel):
     api_key: str = Field(..., min_length=4, max_length=512)
     extra_secret: str | None = Field(default=None, max_length=512)
     organization_id: str | None = Field(default=None, max_length=120)
+    workspace_id: str | None = Field(default=None, max_length=120)
     low_balance_threshold: float | None = Field(default=None, ge=0.0)
 
 
@@ -34,6 +35,7 @@ class CredentialRotateRequest(BaseModel):
     api_key: str = Field(..., min_length=4, max_length=512)
     extra_secret: str | None = Field(default=None, max_length=512)
     organization_id: str | None = Field(default=None, max_length=120)
+    workspace_id: str | None = Field(default=None, max_length=120)
 
 
 class AccountOut(BaseModel):
@@ -42,6 +44,7 @@ class AccountOut(BaseModel):
     provider_name: str
     name: str
     external_org_id: str | None = None
+    external_workspace_id: str | None = None
     status: str
     status_message: str | None = None
     is_admin_key: bool

@@ -127,6 +127,7 @@ beforeEach(() => {
               provider_name: 'OpenAI',
               name: '[DEMO] OpenAI Production Org',
               external_org_id: 'org-demo',
+              external_workspace_id: null,
               status: 'connected',
               status_message: 'Demo Mode',
               is_admin_key: true,

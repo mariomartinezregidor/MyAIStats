@@ -20,6 +20,7 @@ export const ProvidersPage: React.FC = () => {
   const [name, setName] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [orgId, setOrgId] = useState('');
+  const [workspaceId, setWorkspaceId] = useState('');
   const [threshold, setThreshold] = useState('');
   const [feedback, setFeedback] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
@@ -39,6 +40,7 @@ export const ProvidersPage: React.FC = () => {
       setName('');
       setApiKey('');
       setOrgId('');
+      setWorkspaceId('');
       setThreshold('');
       setFeedback({
         type: 'ok',
@@ -91,6 +93,7 @@ export const ProvidersPage: React.FC = () => {
       name: name.trim(),
       api_key: apiKey.trim(),
       organization_id: orgId.trim() || undefined,
+      workspace_id: workspaceId.trim() || undefined,
       low_balance_threshold: threshold ? Number(threshold) : null,
     });
   };
@@ -204,6 +207,18 @@ export const ProvidersPage: React.FC = () => {
                 placeholder="org-..."
                 value={orgId}
                 onChange={(e) => setOrgId(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-[#1f2433] bg-[#090a0f] px-3 py-2 text-xs text-slate-100 focus:border-indigo-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-300">
+                Workspace ID (Anthropic service accounts)
+              </label>
+              <input
+                type="text"
+                placeholder="wrkspc_..."
+                value={workspaceId}
+                onChange={(e) => setWorkspaceId(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-[#1f2433] bg-[#090a0f] px-3 py-2 text-xs text-slate-100 focus:border-indigo-500 focus:outline-none"
               />
             </div>

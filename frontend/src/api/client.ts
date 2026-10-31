@@ -47,6 +47,7 @@ export const api = {
     name: string;
     api_key: string;
     organization_id?: string;
+    workspace_id?: string;
     low_balance_threshold?: number | null;
   }) =>
     request<AccountInfo>('/accounts/connect', {

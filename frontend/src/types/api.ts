@@ -23,6 +23,7 @@ export interface AccountInfo {
   provider_name: string;
   name: string;
   external_org_id: string | null;
+  external_workspace_id: string | null;
   status: 'connected' | 'error' | 'unverified' | 'partial';
   status_message: string | null;
   is_admin_key: boolean;

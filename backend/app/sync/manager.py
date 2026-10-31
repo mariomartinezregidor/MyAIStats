@@ -85,6 +85,7 @@ class SyncManager:
                 api_key=decrypted_key,
                 extra_secret=decrypted_extra,
                 organization_id=account.external_org_id,
+                workspace_id=account.external_workspace_id,
             )
 
             end_time = datetime.now(UTC)
